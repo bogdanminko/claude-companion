@@ -73,7 +73,7 @@ final class CompanionView: NSView {
     }
 
     private func updateTrick() {
-        guard mood == .idle || (mood == .hover && trick == .fiesta) else { stopTrick(); return }
+        guard mood == .idle || (mood == .hover && (trick == .fiesta || trick == .glitch)) else { stopTrick(); return }
         if trick == nil, tick >= nextTrick {
             startTrick(Trick.allCases.randomElement()!)
         }
@@ -164,7 +164,7 @@ final class CompanionView: NSView {
         case .listening:    screen = .listening(tick: tick)
         case .sleeping:     screen = .off
         }
-        let phase = Double(tick) * (sleeping ? 0.05 : trick == .walk ? 0.9 : 0.18)
+        let phase = Double(tick) * (sleeping ? 0.05 : trick == .walk ? 0.9 : dragged ? 1.6 : 0.18)  // carried: legs run in the air
 
         let grid = PixelSprite.render(legPhase: phase, eyes: eyes, blush: mood == .hover, screen: screen,
                                       fiesta: trick == .fiesta ? t / 2 : nil)
@@ -240,6 +240,7 @@ final class CompanionView: NSView {
         let dy = m.y - dragStartMouse.y
         if !dragged, abs(dx) + abs(dy) > 3 {
             dragged = true
+            wake()
             onDragStart?()
         }
         if dragged {
@@ -249,11 +250,17 @@ final class CompanionView: NSView {
 
     override func mouseUp(with event: NSEvent) {
         if dragged {
+            dragged = false
             (window as? CompanionPanel)?.savePosition()
             return
         }
         wake()
-        onClick?()
+        if event.clickCount == 2 {                    // double click: glitch
+            mood = .idle
+            startTrick(.glitch)
+        } else {
+            onClick?()
+        }
     }
 
     override func rightMouseDown(with event: NSEvent) {

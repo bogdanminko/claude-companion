@@ -31,6 +31,7 @@ The rest of the time it just lives there: blinks, shuffles its legs, gets bored 
 - floats above all windows on every Space; drag it anywhere, it remembers the spot;
 - a random trick every 8–25 seconds when idle — walks off sideways, jumps, shivers, waves, glitches, or puts on a sombrero and plays guitar;
 - blushes and looks up on hover, falls asleep after 5 minutes without attention;
+- **double click** — it glitches; **drag** it and its legs run in the air;
 - **double Option** from any app shows the capsule;
 - **voice** — Claude voice input via Caps Lock, Pixel flaps its arms while you talk;
 - right click / menu bar icon: voice, open Claude / Claude Code, hide, sleep, fiesta, back to corner, quit;
