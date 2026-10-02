@@ -1,13 +1,7 @@
-.PHONY: build run install uninstall restart logs preview clean
+.PHONY: build run install uninstall restart logs clean
 
 build:
 	./scripts/build.sh
-
-preview:
-	mkdir -p build
-	swiftc -O -o build/octo-preview Sources/Octo/OctoSprite.swift tools/preview/main.swift
-	./build/octo-preview build/preview.png
-	open build/preview.png
 
 run: build
 	open build/Octo.app
