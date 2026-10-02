@@ -33,6 +33,7 @@ final class CompanionView: NSView {
     private var dragStartOrigin: NSPoint = .zero
     private var dragged = false
 
+    private static let glitchColors = [NSColor(srgbRed: 0.2, green: 0.95, blue: 1, alpha: 1), NSColor(srgbRed: 1, green: 0.25, blue: 0.75, alpha: 1)]
     private static let noteColor = NSColor(srgbRed: 0.98, green: 0.85, blue: 0.45, alpha: 1)
     private static let zzzColor = NSColor(srgbRed: 0.65, green: 0.70, blue: 0.95, alpha: 1)
 
@@ -91,7 +92,7 @@ final class CompanionView: NSView {
         trickStart = tick
         trickLength = switch t {
         case .walk: Int.random(in: 15...40)
-        case .glitch: 6
+        case .glitch: 15
         case .fiesta: 60
         default: 12
         }
@@ -168,10 +169,13 @@ final class CompanionView: NSView {
         let grid = PixelSprite.render(legPhase: phase, eyes: eyes, blush: mood == .hover, screen: screen,
                                       fiesta: trick == .fiesta ? t / 2 : nil)
         for (y, row) in grid.enumerated() {
-            let glitch: CGFloat = trick == .glitch && Int.random(in: 0..<3) == 0 ? CGFloat(Int.random(in: -2...2)) * p : 0
+            // glitch: rows tear sideways, some get a cyan / magenta fringe like broken video
+            let torn = trick == .glitch && Int.random(in: 0..<2) == 0
+            let glitch: CGFloat = torn ? CGFloat(Int.random(in: -3...3)) * p : 0
+            let fringe: NSColor? = torn && Int.random(in: 0..<3) == 0 ? Self.glitchColors.randomElement() : nil
             for (x, color) in row.enumerated() {
                 guard let color else { continue }
-                color.setFill()
+                (fringe ?? color).setFill()
                 NSRect(x: ox + glitch + CGFloat(x) * p, y: oy + CGFloat(y) * p, width: p, height: p).fill()
             }
         }
