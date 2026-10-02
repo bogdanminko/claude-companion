@@ -5,6 +5,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var panel: CompanionPanel!
     private var statusItem: NSStatusItem!
     private let bubble = BubblePanel()
+    private let doubleOption = DoubleOptionDetector()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         panel = CompanionPanel()
@@ -25,8 +26,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem.button?.image = NSImage(systemSymbolName: "terminal", accessibilityDescription: "Octo")
         statusItem.menu = makeMenu()
 
-        // Спросим доступ к Accessibility один раз при старте — он нужен, чтобы нажимать двойной Option.
-        QuickEntry.ensureAccessibility(prompt: true)
+        // Accessibility нужен и для ловли двойного Option, и для нажатия хоткеев Claude.
+        doubleOption.onDoubleTap = { [unowned self] in self.summon() }
+        if QuickEntry.ensureAccessibility(prompt: true) {
+            doubleOption.start()
+        } else {
+            waitForAccessibility()
+        }
+    }
+
+    /// Пока доступа нет — проверяем раз в 2 секунды и включаем хоткей, как только его выдали.
+    private func waitForAccessibility() {
+        Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] timer in
+            MainActor.assumeIsolated {
+                guard QuickEntry.ensureAccessibility(prompt: false) else { return }
+                timer.invalidate()
+                self?.doubleOption.stop()
+                self?.doubleOption.start()
+            }
+        }
+    }
+
+    /// Двойной Option: показать Octo (если спрятан) и капсулу; повторно — спрятать капсулу.
+    private func summon() {
+        if !panel.isVisible { panel.orderFrontRegardless() }
+        if QuickEntry.isListening {
+            QuickEntry.toggleVoice()
+        } else {
+            bubble.toggle(below: panel.frame, listening: false)
+        }
     }
 
     private func makeMenu() -> NSMenu {

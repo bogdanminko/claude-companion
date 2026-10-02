@@ -8,8 +8,8 @@
 
 - висит поверх всех окон и на всех рабочих столах, перетаскивается мышью, запоминает позицию;
 - моргает, шевелит щупальцами, краснеет при наведении, засыпает через 5 минут без внимания;
-- **клик** — показывает капсулу с двумя кнопками:
-  - ✏️ **чат** — quick entry Claude (имитирует двойной Option);
+- **двойной Option** (из любого приложения) или **клик** по осьминогу — показывает капсулу с двумя кнопками:
+  - ✏️ **чат** — quick entry Claude (нажимает Option + Space);
   - 〰️ **голос** — голосовой ввод Claude (имитирует Caps Lock; на экране осьминога — эквалайзер, клик по нему останавливает запись);
 - если Claude не запущен — сначала запускает его;
 - **правый клик** или иконка в меню-баре — меню: quick entry, открыть Claude, спрятать, уложить спать, выйти;
@@ -19,7 +19,8 @@
 
 - macOS 13+
 - Swift 5.10+ (Xcode или Command Line Tools)
-- [Claude Desktop](https://claude.ai/download) с включённым quick entry на двойной Option
+- [Claude Desktop](https://claude.ai/download), в котором хоткей quick entry переключён на **Option + Space**
+  (Settings → General → Desktop app → Quick access shortcut) — двойной Option забирает себе Octo
 - для голоса — включённый в настройках Claude голосовой ввод по Caps Lock
 
 ## Установка
@@ -28,11 +29,11 @@
 make install     # сборка + ~/Applications/Octo.app + LaunchAgent
 ```
 
-При первом запуске macOS попросит доступ к **Accessibility** — он нужен, чтобы Octo мог «нажать» двойной Option.
-System Settings → Privacy & Security → Accessibility → включить Octo.
+При первом запуске macOS попросит доступ к **Accessibility** — он нужен, чтобы ловить двойной Option и нажимать хоткеи Claude.
+System Settings → Privacy & Security → Accessibility → включить Octo. Перезапускать не нужно — Octo подхватит доступ сам.
 
-> Сборка подписывается ad-hoc, поэтому после каждой пересборки macOS может снова попросить доступ:
-> выключите и включите Octo в списке Accessibility.
+> Сборка подписывается ad-hoc, поэтому после каждой переустановки доступ нужно выдать заново —
+> `install.sh` сам сбрасывает устаревшую запись, так что macOS просто спросит ещё раз.
 
 ## Команды
 
@@ -53,7 +54,8 @@ Sources/Octo/
   CompanionPanel.swift  — прозрачное плавающее окно
   CompanionView.swift   — спрайт, анимации, мышь
   BubblePanel.swift     — капсула «чат / голос»
-  QuickEntry.swift      — двойной Option и Caps Lock через CGEvent
+  DoubleOptionDetector.swift — глобальный двойной Option
+  QuickEntry.swift      — Option + Space и Caps Lock через CGEvent
 launchd/                — шаблон LaunchAgent
 scripts/                — build / install / uninstall
 ```

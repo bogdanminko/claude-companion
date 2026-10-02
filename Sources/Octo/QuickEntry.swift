@@ -1,11 +1,11 @@
 import AppKit
 import ApplicationServices
 
-/// Вызов quick entry Claude: имитируем двойное нажатие Option (стандартный хоткей на Mac).
+/// Вызов Claude: quick entry по Option + Space, голос по Caps Lock.
 @MainActor
 enum QuickEntry {
     static let claudeBundleID = "com.anthropic.claudefordesktop"
-    private static let optionKeyCode: CGKeyCode = 58 // kVK_Option
+    private static let spaceKeyCode: CGKeyCode = 49 // kVK_Space
 
     @discardableResult
     static func ensureAccessibility(prompt: Bool) -> Bool {
@@ -24,8 +24,7 @@ enum QuickEntry {
             return
         }
         guard ensureAccessibility(prompt: true) else { return }
-        tapOption()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { tapOption() }
+        pressOptionSpace()
     }
 
     // MARK: Голос — Caps Lock: нажать, говорить, нажать ещё раз
@@ -82,17 +81,15 @@ enum QuickEntry {
         NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
     }
 
-    private static func tapOption() {
+    /// Option + Space — хоткей quick entry, который нужно выбрать в настройках Claude
+    /// (двойной Option теперь занят самим Octo).
+    private static func pressOptionSpace() {
         let source = CGEventSource(stateID: .hidSystemState)
-        if let down = CGEvent(keyboardEventSource: source, virtualKey: optionKeyCode, keyDown: true) {
-            down.type = .flagsChanged
-            down.flags = .maskAlternate
-            down.post(tap: .cghidEventTap)
-        }
-        if let up = CGEvent(keyboardEventSource: source, virtualKey: optionKeyCode, keyDown: false) {
-            up.type = .flagsChanged
-            up.flags = []
-            up.post(tap: .cghidEventTap)
+        for keyDown in [true, false] {
+            if let e = CGEvent(keyboardEventSource: source, virtualKey: spaceKeyCode, keyDown: keyDown) {
+                e.flags = .maskAlternate
+                e.post(tap: .cghidEventTap)
+            }
         }
     }
 }
