@@ -8,7 +8,10 @@
 
 - висит поверх всех окон и на всех рабочих столах, перетаскивается мышью, запоминает позицию;
 - моргает, шевелит щупальцами, краснеет при наведении, засыпает через 5 минут без внимания;
-- **клик** — вызывает quick entry Claude (имитирует двойной Option); если Claude не запущен — запускает его;
+- **клик** — показывает капсулу с двумя кнопками:
+  - ✏️ **чат** — quick entry Claude (имитирует двойной Option);
+  - 〰️ **голос** — голосовой ввод Claude (имитирует Caps Lock; на экране осьминога — эквалайзер, клик по нему останавливает запись);
+- если Claude не запущен — сначала запускает его;
 - **правый клик** или иконка в меню-баре — меню: quick entry, открыть Claude, спрятать, уложить спать, выйти;
 - работает как LaunchAgent: стартует при входе в систему и поднимается заново после падения.
 
@@ -17,6 +20,7 @@
 - macOS 13+
 - Swift 5.10+ (Xcode или Command Line Tools)
 - [Claude Desktop](https://claude.ai/download) с включённым quick entry на двойной Option
+- для голоса — включённый в настройках Claude голосовой ввод по Caps Lock
 
 ## Установка
 
@@ -48,7 +52,8 @@ Sources/Octo/
   AppDelegate.swift     — меню-бар и контекстное меню
   CompanionPanel.swift  — прозрачное плавающее окно
   CompanionView.swift   — спрайт, анимации, мышь
-  QuickEntry.swift      — двойной Option через CGEvent
+  BubblePanel.swift     — капсула «чат / голос»
+  QuickEntry.swift      — двойной Option и Caps Lock через CGEvent
 launchd/                — шаблон LaunchAgent
 scripts/                — build / install / uninstall
 ```

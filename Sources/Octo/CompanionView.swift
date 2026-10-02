@@ -7,9 +7,10 @@ final class CompanionView: NSView {
     static let size = NSSize(width: 16 * 5 + 30, height: 16 * 5 + 30)
     static let idleTimeout: TimeInterval = 300  // через 5 минут без внимания засыпает
 
-    enum Mood { case idle, hover, thinking, sleeping }
+    enum Mood { case idle, hover, thinking, listening, sleeping }
 
     var onClick: (() -> Void)?
+    var onDragStart: (() -> Void)?
     var contextMenuProvider: (() -> NSMenu)?
 
     private(set) var mood: Mood = .idle
@@ -87,7 +88,7 @@ final class CompanionView: NSView {
 
     private func step() {
         tick += 1
-        if mood != .sleeping, mood != .thinking,
+        if mood != .sleeping, mood != .thinking, mood != .listening,
            Date().timeIntervalSince(lastInteraction) > Self.idleTimeout {
             mood = .sleeping
         }
@@ -105,7 +106,13 @@ final class CompanionView: NSView {
         if mood == .sleeping { mood = .idle }
     }
 
-    private func think() {
+    func setListening(_ on: Bool) {
+        lastInteraction = Date()
+        mood = on ? .listening : .idle
+    }
+
+    func think() {
+        lastInteraction = Date()
         mood = .thinking
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
             guard let self, self.mood == .thinking else { return }
@@ -173,6 +180,12 @@ final class CompanionView: NSView {
             for i in 0..<3 {
                 cell(5 + i * 2, 9, i == active ? C.glyph : C.glyphDim)
             }
+        case .listening:
+            // эквалайзер: столбики высотой 1…4 «пикселя»
+            for c in 4...11 {
+                let h = max(1, 4 - abs(((tick + c * 3) % 8) - 4))
+                for r in 0..<h { cell(c, 10 - r, C.glyph) }
+            }
         case .sleeping:
             break // экран выключен
         }
@@ -215,7 +228,10 @@ final class CompanionView: NSView {
         let m = NSEvent.mouseLocation
         let dx = m.x - dragStartMouse.x
         let dy = m.y - dragStartMouse.y
-        if abs(dx) + abs(dy) > 3 { dragged = true }
+        if !dragged, abs(dx) + abs(dy) > 3 {
+            dragged = true
+            onDragStart?()
+        }
         if dragged {
             window?.setFrameOrigin(NSPoint(x: dragStartOrigin.x + dx, y: dragStartOrigin.y + dy))
         }
@@ -227,7 +243,6 @@ final class CompanionView: NSView {
             return
         }
         wake()
-        think()
         onClick?()
     }
 
