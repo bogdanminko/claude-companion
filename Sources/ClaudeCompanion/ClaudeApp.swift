@@ -1,11 +1,10 @@
 import AppKit
 import ApplicationServices
 
-/// Вызов Claude: quick entry по Option + Space, голос по Caps Lock.
+/// Claude desktop app: open it, open a Claude Code session, toggle voice via Caps Lock.
 @MainActor
-enum QuickEntry {
+enum ClaudeApp {
     static let claudeBundleID = "com.anthropic.claudefordesktop"
-    private static let spaceKeyCode: CGKeyCode = 49 // kVK_Space
 
     @discardableResult
     static func ensureAccessibility(prompt: Bool) -> Bool {
@@ -17,23 +16,13 @@ enum QuickEntry {
         !NSRunningApplication.runningApplications(withBundleIdentifier: claudeBundleID).isEmpty
     }
 
-    static func open() {
-        guard isClaudeRunning else {
-            // Quick entry работает только при запущенном приложении — сначала поднимем его.
-            openMainApp()
-            return
-        }
-        guard ensureAccessibility(prompt: true) else { return }
-        pressOptionSpace()
-    }
-
-    // MARK: Голос — Caps Lock: нажать, говорить, нажать ещё раз
+    // MARK: Voice — Caps Lock: press, talk, press again
 
     private static let capsLockKeyCode: CGKeyCode = 57 // kVK_CapsLock
     private(set) static var isListening = false
     private static var lastSyntheticCaps = Date.distantPast
     private static var capsMonitor: Any?
-    /// Вызывается при любой смене состояния голоса (в т.ч. если Caps Lock нажали руками).
+    /// Called on any voice state change (including Caps Lock pressed by hand).
     static var onListeningChanged: ((Bool) -> Void)?
 
     static func toggleVoice() {
@@ -46,13 +35,13 @@ enum QuickEntry {
         onListeningChanged?(isListening)
     }
 
-    /// Следим за физическим Caps Lock, чтобы Octo не рассинхронизировался с Claude.
+    /// Watch the physical Caps Lock so Pixel stays in sync with Claude.
     private static func startCapsMonitorIfNeeded() {
         guard capsMonitor == nil else { return }
         capsMonitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged) { event in
             guard event.keyCode == capsLockKeyCode else { return }
             MainActor.assumeIsolated {
-                // наше собственное нажатие пропускаем
+                // skip our own press
                 guard Date().timeIntervalSince(lastSyntheticCaps) > 0.3 else { return }
                 isListening.toggle()
                 onListeningChanged?(isListening)
@@ -71,7 +60,7 @@ enum QuickEntry {
         }
     }
 
-    // MARK: Приложение
+    // MARK: App
 
     static func openMainApp() {
         guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: claudeBundleID) else {
@@ -81,15 +70,5 @@ enum QuickEntry {
         NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
     }
 
-    /// Option + Space — хоткей quick entry, который нужно выбрать в настройках Claude
-    /// (двойной Option теперь занят самим Octo).
-    private static func pressOptionSpace() {
-        let source = CGEventSource(stateID: .hidSystemState)
-        for keyDown in [true, false] {
-            if let e = CGEvent(keyboardEventSource: source, virtualKey: spaceKeyCode, keyDown: keyDown) {
-                e.flags = .maskAlternate
-                e.post(tap: .cghidEventTap)
-            }
-        }
-    }
+    static func openCode() { NSWorkspace.shared.open(URL(string: "claude://code/new")!) } // new session in the Code tab
 }

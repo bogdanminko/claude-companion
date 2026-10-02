@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
-# Собирает build/Octo.app из SwiftPM-таргета.
+# Builds "build/Claude Companion.app" from the SwiftPM target.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 swift build -c release
 
-APP=build/Octo.app
+APP="build/Claude Companion.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp .build/release/Octo "$APP/Contents/MacOS/Octo"
+cp .build/release/ClaudeCompanion "$APP/Contents/MacOS/ClaudeCompanion"
+cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 
-# ad-hoc подпись: нужна, чтобы macOS запомнила разрешение Accessibility
-codesign --force --sign - --identifier com.bogdanminko.octo "$APP"
+# ad-hoc signature: needed so macOS remembers the Accessibility permission
+codesign --force --sign - --identifier com.bogdanminko.claude-companion "$APP"
 
-echo "✓ Собрано: $APP"
+echo "✓ Built: $APP"

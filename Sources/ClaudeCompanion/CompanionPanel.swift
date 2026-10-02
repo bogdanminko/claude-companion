@@ -1,10 +1,10 @@
 import AppKit
 
-/// Прозрачное окно без рамки, висит поверх всех окон и на всех рабочих столах.
+/// Transparent borderless window, floats above all windows on every Space.
 @MainActor
 final class CompanionPanel: NSPanel {
     let companionView: CompanionView
-    private static let originKey = "octoOrigin"
+    private static let originKey = "pixelOrigin"
 
     init() {
         companionView = CompanionView(frame: NSRect(origin: .zero, size: CompanionView.size))

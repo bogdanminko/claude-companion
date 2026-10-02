@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Собирает Octo, кладёт в ~/Applications и регистрирует LaunchAgent (автозапуск + перезапуск при падении).
+# Builds Claude Companion, puts it in ~/Applications and registers a LaunchAgent (autostart + restart on crash).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-LABEL=com.bogdanminko.octo
-DEST="$HOME/Applications/Octo.app"
+LABEL=com.bogdanminko.claude-companion
+DEST="$HOME/Applications/Claude Companion.app"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 DOMAIN="gui/$(id -u)"
 
@@ -12,19 +12,18 @@ DOMAIN="gui/$(id -u)"
 
 mkdir -p "$HOME/Applications" "$HOME/Library/LaunchAgents"
 
-# снять старую версию, если была
+# remove the old version, if any
 launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null || true
 
 rm -rf "$DEST"
-cp -R build/Octo.app "$DEST"
+cp -R "build/Claude Companion.app" "$DEST"
 
-# ad-hoc подпись меняется при каждой сборке → старая галочка Accessibility больше не действует.
-# Сбрасываем её, чтобы macOS честно спросила заново, а не показывала «включено, но не работает».
+# the ad-hoc signature changes every build → the old Accessibility checkbox no longer applies.
+# Reset it so macOS asks again instead of showing "enabled but not working".
 tccutil reset Accessibility "$LABEL" >/dev/null 2>&1 || true
 
-sed "s|__EXECUTABLE__|$DEST/Contents/MacOS/Octo|" "launchd/$LABEL.plist" > "$PLIST"
+sed "s|__EXECUTABLE__|$DEST/Contents/MacOS/ClaudeCompanion|" "launchd/$LABEL.plist" > "$PLIST"
 launchctl bootstrap "$DOMAIN" "$PLIST"
 
-echo "✓ Octo установлен и запущен как LaunchAgent ($LABEL)"
-echo "  1. Выдайте доступ: System Settings → Privacy & Security → Accessibility → Octo"
-echo "  2. В Claude: Settings → General → Desktop app → Quick access shortcut → Option + Space"
+echo "✓ Claude Companion installed and running as LaunchAgent ($LABEL)"
+echo "  Grant access: System Settings → Privacy & Security → Accessibility → Claude Companion"

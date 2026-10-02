@@ -1,67 +1,94 @@
-# Octo — пиксельный компаньон для Claude на macOS
+<div align="center">
 
-Маленький осьминог с терминалом на пузе, который живёт поверх всех окон и по клику открывает quick entry десктопного приложения Claude.
+<img src="docs/fiesta.gif" width="260" alt="Pixel playing guitar in a sombrero">
 
-> Неофициальный фан-проект, не связан с Anthropic.
+# Claude Companion
 
-## Что умеет
+**A tiny pixel Clawd that lives on your Mac desktop and opens Claude or Claude Code in one move.**
 
-- висит поверх всех окон и на всех рабочих столах, перетаскивается мышью, запоминает позицию;
-- моргает, шевелит щупальцами, краснеет при наведении, засыпает через 5 минут без внимания;
-- **двойной Option** (из любого приложения) или **клик** по осьминогу — показывает капсулу с двумя кнопками:
-  - ✏️ **чат** — quick entry Claude (нажимает Option + Space);
-  - 〰️ **голос** — голосовой ввод Claude (имитирует Caps Lock; на экране осьминога — эквалайзер, клик по нему останавливает запись);
-- если Claude не запущен — сначала запускает его;
-- **правый клик** или иконка в меню-баре — меню: quick entry, открыть Claude, спрятать, уложить спать, выйти;
-- работает как LaunchAgent: стартует при входе в систему и поднимается заново после падения.
+macOS 13+ · Swift · no dependencies
 
-## Требования
+</div>
 
-- macOS 13+
-- Swift 5.10+ (Xcode или Command Line Tools)
-- [Claude Desktop](https://claude.ai/download), в котором хоткей quick entry переключён на **Option + Space**
-  (Settings → General → Desktop app → Quick access shortcut) — двойной Option забирает себе Octo
-- для голоса — включённый в настройках Claude голосовой ввод по Caps Lock
+> Unofficial fan project, not affiliated with Anthropic. Clawd is the Claude Code mascot from the CLI banner.
 
-## Установка
+## What it does
+
+Pixel sits on top of all your windows. Hover it and a small capsule pops up with two icons:
+
+- **Claude** — opens the desktop app;
+- **Claude Code** — opens a new session in the Code tab.
+
+The rest of the time it just lives there: blinks, shuffles its legs, gets bored and does tricks.
+
+| | | | |
+|:-:|:-:|:-:|:-:|
+| <img src="docs/idle.gif" width="130"><br>idle | <img src="docs/jump.gif" width="130"><br>jump | <img src="docs/wave.gif" width="130"><br>wave | <img src="docs/look.gif" width="130"><br>look around |
+| <img src="docs/shake.gif" width="130"><br>shiver | <img src="docs/glitch.gif" width="130"><br>glitch | <img src="docs/fiesta.gif" width="130"><br>fiesta 🎸 | <img src="docs/sleep.gif" width="130"><br>sleep |
+
+## Features
+
+- floats above all windows on every Space; drag it anywhere, it remembers the spot;
+- a random trick every 8–25 seconds when idle — walks off sideways, jumps, shivers, waves, glitches, or puts on a sombrero and plays guitar;
+- blushes and looks up on hover, falls asleep after 5 minutes without attention;
+- **double Option** from any app shows the capsule;
+- **voice** — Claude voice input via Caps Lock, Pixel flaps its arms while you talk;
+- right click / menu bar icon: voice, open Claude / Claude Code, hide, sleep, fiesta, back to corner, quit;
+- runs as a LaunchAgent: starts at login, restarts after a crash.
+
+## Install
+
+Requires macOS 13+, Swift 5.10+ (Xcode or Command Line Tools) and [Claude Desktop](https://claude.ai/download).
 
 ```bash
-make install     # сборка + ~/Applications/Octo.app + LaunchAgent
+git clone https://github.com/bogdanminko/claude-companion.git
+cd claude-companion
+make install
 ```
 
-При первом запуске macOS попросит доступ к **Accessibility** — он нужен, чтобы ловить двойной Option и нажимать хоткеи Claude.
-System Settings → Privacy & Security → Accessibility → включить Octo. Перезапускать не нужно — Octo подхватит доступ сам.
+Then grant **Accessibility** access (needed for double Option and the Caps Lock voice key):
+System Settings → Privacy & Security → Accessibility → enable **Claude Companion**. No restart needed.
 
-> Сборка подписывается ad-hoc, поэтому после каждой переустановки доступ нужно выдать заново —
-> `install.sh` сам сбрасывает устаревшую запись, так что macOS просто спросит ещё раз.
+> The build is ad-hoc signed, so macOS asks for access again after every reinstall —
+> `install.sh` resets the stale entry for you.
 
-## Команды
+For voice, enable Caps Lock voice input in Claude settings.
 
-| Команда | Что делает |
+## Commands
+
+| Command | What it does |
 | --- | --- |
-| `make run` | собрать и запустить без установки |
-| `make install` | установить и зарегистрировать LaunchAgent |
-| `make restart` | перезапустить агента |
-| `make logs` | логи из `/tmp/octo.*.log` |
-| `make uninstall` | остановить и удалить |
+| `make install` | build, copy to `~/Applications`, register the LaunchAgent |
+| `make run` | build and run without installing |
+| `make restart` | restart the agent |
+| `make logs` | tail `/tmp/claude-companion.*.log` |
+| `make uninstall` | stop and remove |
+| `make preview` | render all sprite states to `build/preview.png` |
+| `make demo` | re-record the GIFs in `docs/` |
+| `make icon` | regenerate `Resources/AppIcon.icns` from the sprite |
 
-## Как устроено
+## How it works
 
 ```
-Sources/Octo/
-  main.swift            — точка входа, приложение без иконки в Dock
-  AppDelegate.swift     — меню-бар и контекстное меню
-  CompanionPanel.swift  — прозрачное плавающее окно
-  CompanionView.swift   — состояние, анимации, мышь
-  OctoSprite.swift      — спрайт 32×32 в плоском стиле (силуэт, глаза, экран, ножки)
-  BubblePanel.swift     — капсула «чат / голос»
-  DoubleOptionDetector.swift — глобальный двойной Option
-  QuickEntry.swift      — Option + Space и Caps Lock через CGEvent
-launchd/                — шаблон LaunchAgent
-scripts/                — build / install / uninstall
+Sources/ClaudeCompanion/
+  main.swift                 — entry point, no Dock icon
+  AppDelegate.swift          — menu bar and context menu
+  CompanionPanel.swift       — transparent floating window
+  CompanionView.swift        — moods, tricks, animation, mouse
+  PixelSprite.swift          — Clawd, 18×10 pixels, block for block from the CLI banner
+  BubblePanel.swift          — Claude / Claude Code capsule
+  DoubleOptionDetector.swift — global double Option
+  ClaudeApp.swift            — opening Claude (claude://code/new), Caps Lock voice
+tools/                       — sprite preview, demo GIF recorder, icon generator
+launchd/                     — LaunchAgent template
+scripts/                     — build / install / uninstall
 ```
 
-`KeepAlive` настроен как `SuccessfulExit = false`: «Выйти» из меню закрывает Octo до следующего входа в систему, а падение — перезапускает.
+The sprite is drawn in code, no image assets. Each quadrant of the CLI banner `▐▛███▜▌ / ▝▜█████▛▘ / ▘▘ ▝▝`
+becomes two square pixels (terminal cells are twice as tall as wide). Change shapes in `PixelSprite.swift`, check with `make preview`.
 
-Спрайт считается в `OctoSprite.swift` из простых фигур — меняйте формы и палитру там,
-а `make preview` отрендерит все состояния в `build/preview.png` без переустановки.
+`KeepAlive` is `SuccessfulExit = false`: Quit closes it until next login, a crash restarts it.
+
+## License
+
+[MIT](LICENSE)

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Останавливает и удаляет Octo и его LaunchAgent.
+# Stops and removes Claude Companion and its LaunchAgent.
 set -euo pipefail
 
-LABEL=com.bogdanminko.octo
+LABEL=com.bogdanminko.claude-companion
 launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
 rm -f "$HOME/Library/LaunchAgents/$LABEL.plist"
-rm -rf "$HOME/Applications/Octo.app"
+rm -rf "$HOME/Applications/Claude Companion.app"
 
-echo "✓ Octo удалён"
+echo "✓ Claude Companion removed"

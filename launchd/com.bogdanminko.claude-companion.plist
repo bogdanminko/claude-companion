@@ -3,15 +3,15 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.bogdanminko.octo</string>
+    <string>com.bogdanminko.claude-companion</string>
     <key>ProgramArguments</key>
     <array>
         <string>__EXECUTABLE__</string>
     </array>
-    <!-- стартует при входе в систему -->
+    <!-- start at login -->
     <key>RunAtLoad</key>
     <true/>
-    <!-- перезапуск только после падения; «Выйти» из меню (exit 0) не перезапускает -->
+    <!-- restart only after a crash; Quit (exit 0) does not restart -->
     <key>KeepAlive</key>
     <dict>
         <key>SuccessfulExit</key>
@@ -24,8 +24,8 @@
     <key>ProcessType</key>
     <string>Interactive</string>
     <key>StandardOutPath</key>
-    <string>/tmp/octo.out.log</string>
+    <string>/tmp/claude-companion.out.log</string>
     <key>StandardErrorPath</key>
-    <string>/tmp/octo.err.log</string>
+    <string>/tmp/claude-companion.err.log</string>
 </dict>
 </plist>
