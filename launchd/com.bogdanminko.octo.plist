@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.bogdanminko.octo</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>__EXECUTABLE__</string>
+    </array>
+    <!-- стартует при входе в систему -->
+    <key>RunAtLoad</key>
+    <true/>
+    <!-- перезапуск только после падения; «Выйти» из меню (exit 0) не перезапускает -->
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+    <key>LimitLoadToSessionType</key>
+    <string>Aqua</string>
+    <key>ProcessType</key>
+    <string>Interactive</string>
+    <key>StandardOutPath</key>
+    <string>/tmp/octo.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/octo.err.log</string>
+</dict>
+</plist>
