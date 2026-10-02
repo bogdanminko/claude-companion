@@ -1,11 +1,11 @@
 import AppKit
 
-/// Пиксельный осьминог с терминалом на пузе.
+/// Пиксельный осьминог с терминалом на пузе: состояние, анимация и мышь.
 @MainActor
 final class CompanionView: NSView {
-    static let px: CGFloat = 5                // размер одного «пикселя» спрайта
-    static let size = NSSize(width: 16 * 5 + 30, height: 16 * 5 + 30)
-    static let idleTimeout: TimeInterval = 300  // через 5 минут без внимания засыпает
+    static let px: CGFloat = 2.5                 // 1 пиксель спрайта = 2.5 pt = 5 физ. пикселей на Retina
+    static let size = NSSize(width: 110, height: 112)
+    static let idleTimeout: TimeInterval = 300   // через 5 минут без внимания засыпает
 
     enum Mood { case idle, hover, thinking, listening, sleeping }
 
@@ -24,46 +24,7 @@ final class CompanionView: NSView {
     private var dragStartOrigin: NSPoint = .zero
     private var dragged = false
 
-    // MARK: Палитра
-
-    private enum C {
-        static let body = NSColor(srgbRed: 0.851, green: 0.467, blue: 0.341, alpha: 1)   // #D97757
-        static let shade = NSColor(srgbRed: 0.722, green: 0.361, blue: 0.251, alpha: 1)  // #B85C40
-        static let light = NSColor(srgbRed: 0.937, green: 0.635, blue: 0.533, alpha: 1)  // блик
-        static let eye = NSColor(srgbRed: 0.169, green: 0.106, blue: 0.090, alpha: 1)
-        static let shine = NSColor.white
-        static let screen = NSColor(srgbRed: 0.118, green: 0.118, blue: 0.125, alpha: 1)
-        static let glyph = NSColor(srgbRed: 0.486, green: 0.890, blue: 0.545, alpha: 1)
-        static let glyphDim = NSColor(srgbRed: 0.486, green: 0.890, blue: 0.545, alpha: 0.3)
-        static let zzz = NSColor(srgbRed: 0.65, green: 0.70, blue: 0.95, alpha: 1)
-    }
-
-    // MARK: Спрайт (16×15)
-
-    private static let head: [String] = [
-        "......OOOO......",
-        "....OLLOOOOO....",
-        "...OLLOOOOOOO...",
-        "..OOLOOOOOOOOO..",
-        "..OOOOOOOOOOOO..",
-        "..OOOOOOOOOOOO..",
-        "..OOOOOOOOOOOO..",
-        "..OSSSSSSSSSSO..",
-        "..OSSSSSSSSSSO..",
-        "..OSSSSSSSSSSO..",
-        "..OSSSSSSSSSSO..",
-        "..DDDDDDDDDDDD..",
-    ]
-    private static let legsA: [String] = [
-        "..OO.OO..OO.OO..",
-        ".OO..O....O..OO.",
-        ".O...OO..OO...O.",
-    ]
-    private static let legsB: [String] = [
-        "..OO.OO..OO.OO..",
-        "..O..OO..OO..O..",
-        ".OO..O....O..OO.",
-    ]
+    private static let zzzColor = NSColor(srgbRed: 0.65, green: 0.70, blue: 0.95, alpha: 1)
 
     // MARK: Жизненный цикл
 
@@ -123,84 +84,48 @@ final class CompanionView: NSView {
     // MARK: Отрисовка
 
     override func draw(_ dirtyRect: NSRect) {
-        NSGraphicsContext.current?.shouldAntialias = false
-        NSGraphicsContext.current?.imageInterpolation = .none
+        guard let ctx = NSGraphicsContext.current else { return }
+        ctx.shouldAntialias = false
 
         let p = Self.px
         let sleeping = mood == .sleeping
-        let half = sleeping ? 15 : 6
-        let bob: CGFloat = (tick / half) % 2 == 0 ? 0 : p
+        // покачивание на 2 пикселя спрайта (5 pt), как в первой версии
+        let bobPeriod = sleeping ? 40.0 : 16.0
+        let bob: CGFloat = sin(Double(tick) / bobPeriod * 2 * .pi) > 0 ? 2 * p : 0
         let ox: CGFloat = 15
-        let oy: CGFloat = 22 + bob
+        let oy: CGFloat = 26 + bob
 
-        func cell(_ col: Int, _ row: Int, _ color: NSColor, size s: CGFloat = p, x0: CGFloat = ox, y0: CGFloat = oy) {
-            color.setFill()
-            NSRect(x: x0 + CGFloat(col) * s, y: y0 + CGFloat(row) * s, width: s, height: s).fill()
-        }
-
-        // тело
-        let legs = ((tick / (sleeping ? 15 : 5)) % 2 == 0) ? Self.legsA : Self.legsB
-        for (r, line) in (Self.head + legs).enumerated() {
-            for (c, ch) in line.enumerated() {
-                switch ch {
-                case "O": cell(c, r, C.body)
-                case "D": cell(c, r, C.shade)
-                case "L": cell(c, r, C.light)
-                case "S": cell(c, r, C.screen)
-                default: break
-                }
-            }
-        }
-
-        // глаза
-        let closed = sleeping || tick < blinkUntil
-        let eyeRow = mood == .hover ? 3 : 4
-        for ex in [4, 10] {
-            if closed {
-                cell(ex, 5, C.eye); cell(ex + 1, 5, C.eye)
-            } else {
-                cell(ex, eyeRow, C.eye); cell(ex + 1, eyeRow, C.shine)
-                cell(ex, eyeRow + 1, C.eye); cell(ex + 1, eyeRow + 1, C.eye)
-            }
-        }
-        // румянец при наведении
-        if mood == .hover {
-            cell(3, 6, C.light); cell(12, 6, C.light)
-        }
-
-        // экран на пузе
+        let eyes: OctoSprite.Eyes = (sleeping || tick < blinkUntil) ? .closed : .open(lookUp: mood == .hover)
+        let screen: OctoSprite.Screen
         switch mood {
-        case .idle, .hover:
-            cell(4, 7, C.glyph); cell(5, 8, C.glyph); cell(4, 9, C.glyph)    // >
-            if (tick / 5) % 2 == 0 {                                          // мигающий курсор
-                cell(7, 9, C.glyph); cell(8, 9, C.glyph)
+        case .idle, .hover: screen = .prompt(cursor: (tick / 5) % 2 == 0)
+        case .thinking:     screen = .thinking(active: (tick / 3) % 3)
+        case .listening:    screen = .listening(tick: tick)
+        case .sleeping:     screen = .off
+        }
+        let phase = Double(tick) * (sleeping ? 0.05 : 0.18)
+
+        let grid = OctoSprite.render(tentaclePhase: phase, eyes: eyes, blush: mood == .hover, screen: screen)
+        for (y, row) in grid.enumerated() {
+            for (x, color) in row.enumerated() {
+                guard let color else { continue }
+                color.setFill()
+                NSRect(x: ox + CGFloat(x) * p, y: oy + CGFloat(y) * p, width: p, height: p).fill()
             }
-        case .thinking:
-            let active = (tick / 3) % 3
-            for i in 0..<3 {
-                cell(5 + i * 2, 9, i == active ? C.glyph : C.glyphDim)
-            }
-        case .listening:
-            // эквалайзер: столбики высотой 1…4 «пикселя»
-            for c in 4...11 {
-                let h = max(1, 4 - abs(((tick + c * 3) % 8) - 4))
-                for r in 0..<h { cell(c, 10 - r, C.glyph) }
-            }
-        case .sleeping:
-            break // экран выключен
         }
 
-        // zzz
+        // zzz над головой
         if sleeping {
-            let zs: CGFloat = 3
-            let pattern = ["xxx", ".x.", "xxx"]
+            let pattern = ["xxxx", "..x.", ".x..", "xxxx"]
             for k in 0..<2 {
                 let phase = (tick / 2 + k * 10) % 20
-                let x0 = ox + 13 * p + CGFloat(phase) * 0.6
-                let y0 = oy - 4 - CGFloat(phase) * 0.9
+                let x0 = ox + 25 * p + CGFloat(phase) * 0.6
+                let y0 = oy - 2 - CGFloat(phase) * 0.9
+                let s: CGFloat = k == 0 ? p : p * 0.8
+                Self.zzzColor.withAlphaComponent(1 - CGFloat(phase) / 25).setFill()
                 for (r, line) in pattern.enumerated() {
                     for (c, ch) in line.enumerated() where ch == "x" {
-                        cell(c, r, C.zzz, size: zs, x0: x0, y0: y0)
+                        NSRect(x: x0 + CGFloat(c) * s, y: y0 + CGFloat(r) * s, width: s, height: s).fill()
                     }
                 }
             }

@@ -52,7 +52,8 @@ Sources/Octo/
   main.swift            — точка входа, приложение без иконки в Dock
   AppDelegate.swift     — меню-бар и контекстное меню
   CompanionPanel.swift  — прозрачное плавающее окно
-  CompanionView.swift   — спрайт, анимации, мышь
+  CompanionView.swift   — состояние, анимации, мышь
+  OctoSprite.swift      — спрайт 32×32 в плоском стиле (силуэт, глаза, экран, ножки)
   BubblePanel.swift     — капсула «чат / голос»
   DoubleOptionDetector.swift — глобальный двойной Option
   QuickEntry.swift      — Option + Space и Caps Lock через CGEvent
@@ -62,4 +63,5 @@ scripts/                — build / install / uninstall
 
 `KeepAlive` настроен как `SuccessfulExit = false`: «Выйти» из меню закрывает Octo до следующего входа в систему, а падение — перезапускает.
 
-Спрайт задан строками в `CompanionView.swift` — перерисовать персонажа можно прямо там.
+Спрайт считается в `OctoSprite.swift` из простых фигур — меняйте формы и палитру там,
+а `make preview` отрендерит все состояния в `build/preview.png` без переустановки.
