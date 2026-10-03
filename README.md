@@ -59,6 +59,22 @@ Each button downloads the file from the [latest release](https://github.com/bogd
 | Linux (Debian, Ubuntu…) | [claude-companion_amd64.deb](https://github.com/bogdanminko/claude-companion/releases/latest/download/claude-companion_amd64.deb) | `sudo apt install ./claude-companion_amd64.deb`, start from the app menu |
 | Linux (any) | [claude-companion-linux-x86_64.tar.gz](https://github.com/bogdanminko/claude-companion/releases/latest/download/claude-companion-linux-x86_64.tar.gz) | unpack, run `./claude-companion` |
 
+### Or let Claude install it
+
+Paste into [Claude Code](https://claude.com/claude-code) — it picks the right build for your system, installs it and
+starts Pixel:
+
+```bash
+claude "Install Claude Companion: https://raw.githubusercontent.com/bogdanminko/claude-companion/main/skills/install/SKILL.md"
+```
+
+Any Claude that can run commands on your computer understands the same line. To keep it as a reusable skill
+(`/install-claude-companion` — also updates and uninstalls):
+
+```bash
+mkdir -p ~/.claude/skills/install-claude-companion && curl -fsSL https://raw.githubusercontent.com/bogdanminko/claude-companion/main/skills/install/SKILL.md -o ~/.claude/skills/install-claude-companion/SKILL.md
+```
+
 Pixel turns on **Start at login** on its first launch; switch it off in the right-click or tray menu.
 Launching it again while it runs just brings Pixel back.
 
@@ -154,6 +170,7 @@ examples/         — sprite preview, demo GIF recorder, icon generator
 launchd/          — LaunchAgent template (macOS)
 scripts/          — build / install / uninstall (.sh for macOS and Linux, .ps1 for Windows)
 installer/        — Windows installer (Inno Setup)
+skills/install/   — SKILL.md: lets Claude install, update or remove Pixel on any system
 .github/workflows — CI on all three systems; release.yml builds the downloads on a v* tag
 ```
 
