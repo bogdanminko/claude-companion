@@ -8,6 +8,8 @@
 
 macOS · Windows · Linux · Rust · one small binary
 
+**[⬇ Download](#download)**
+
 </div>
 
 > Unofficial fan project, not affiliated with Anthropic. Clawd is the Claude Code mascot from the CLI banner.
@@ -39,14 +41,23 @@ The rest of the time it just lives there: blinks, shuffles its legs, gets bored 
 
 ## Download
 
-Grab the file for your system from the [latest release](https://github.com/bogdanminko/claude-companion/releases/latest):
+<div align="center">
 
-| System | File | How |
+[![Download for macOS](https://img.shields.io/badge/Download-macOS-D97757?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/bogdanminko/claude-companion/releases/latest/download/ClaudeCompanion-macOS.dmg)
+[![Download for Windows](https://img.shields.io/badge/Download-Windows-D97757?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/bogdanminko/claude-companion/releases/latest/download/ClaudeCompanion-Setup.exe)
+[![Download for Linux](https://img.shields.io/badge/Download-Linux%20.deb-D97757?style=for-the-badge&logo=linux&logoColor=white)](https://github.com/bogdanminko/claude-companion/releases/latest/download/claude-companion_amd64.deb)
+
+</div>
+
+Each button downloads the file from the [latest release](https://github.com/bogdanminko/claude-companion/releases/latest).
+
+| System | Download | How |
 | --- | --- | --- |
-| macOS 11+ (Apple Silicon and Intel) | `ClaudeCompanion-macOS.dmg` | drag to Applications, open |
-| Windows 10 / 11 | `ClaudeCompanion-Setup.exe` | run the installer; or just run `ClaudeCompanion-portable.exe` |
-| Linux (Debian, Ubuntu…) | `claude-companion_amd64.deb` | `sudo apt install ./claude-companion_amd64.deb`, then start it from the app menu |
-| Linux (any) | `claude-companion-linux-x86_64.tar.gz` | unpack, run `./claude-companion` |
+| macOS 11+ (Apple Silicon and Intel) | [ClaudeCompanion-macOS.dmg](https://github.com/bogdanminko/claude-companion/releases/latest/download/ClaudeCompanion-macOS.dmg) | drag to Applications, open |
+| Windows 10 / 11 | [ClaudeCompanion-Setup.exe](https://github.com/bogdanminko/claude-companion/releases/latest/download/ClaudeCompanion-Setup.exe) | run the installer |
+| Windows, no install | [ClaudeCompanion-portable.exe](https://github.com/bogdanminko/claude-companion/releases/latest/download/ClaudeCompanion-portable.exe) | just run it |
+| Linux (Debian, Ubuntu…) | [claude-companion_amd64.deb](https://github.com/bogdanminko/claude-companion/releases/latest/download/claude-companion_amd64.deb) | `sudo apt install ./claude-companion_amd64.deb`, start from the app menu |
+| Linux (any) | [claude-companion-linux-x86_64.tar.gz](https://github.com/bogdanminko/claude-companion/releases/latest/download/claude-companion-linux-x86_64.tar.gz) | unpack, run `./claude-companion` |
 
 Pixel turns on **Start at login** on its first launch; switch it off in the right-click or tray menu.
 Launching it again while it runs just brings Pixel back.
