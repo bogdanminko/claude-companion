@@ -1,0 +1,62 @@
+[package]
+name = "claude-companion"
+version = "0.2.0"
+edition = "2021"
+description = "A tiny pixel Clawd that lives on your desktop and opens Claude or Claude Code in one move"
+license = "MIT"
+publish = false
+build = "build.rs"
+
+[[bin]]
+name = "claude-companion"
+path = "src/main.rs"
+
+[dependencies]
+winit = { version = "0.30", default-features = false, features = ["rwh_06", "x11"] }
+glutin = { version = "0.32", default-features = false, features = ["egl", "glx", "wgl", "x11"] }
+glutin-winit = { version = "0.5", default-features = false, features = ["egl", "glx", "wgl", "x11"] }
+glow = "0.16"
+raw-window-handle = "0.6"
+font8x8 = { version = "0.3", default-features = false }
+dirs = "6"
+
+[target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
+tray-icon = "0.26"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-foundation = { version = "0.3", features = ["NSGeometry", "NSArray", "NSString", "NSURL"] }
+objc2-app-kit = { version = "0.3", features = ["NSWindow", "NSView", "NSScreen", "NSEvent", "NSRunningApplication", "NSWorkspace", "NSResponder", "objc2-core-foundation"] }
+objc2-core-graphics = { version = "0.3", features = ["CGEvent", "CGEventSource", "CGEventTypes", "CGRemoteOperation"] }
+objc2-application-services = { version = "0.3", features = ["HIServices", "AXUIElement"] }
+objc2-core-foundation = { version = "0.3", features = ["CFDictionary", "CFString", "CFNumber", "CFCGTypes"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-sys = { version = "0.59", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",
+    "Win32_System_Diagnostics_ToolHelp",
+    "Win32_System_Registry",
+    "Win32_System_Threading",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging",
+] }
+
+[target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]
+x11-dl = "2.21"
+ksni = { version = "0.3", default-features = false, features = ["blocking", "async-io"] }
+
+[build-dependencies]
+winresource = "0.1"
+
+[dev-dependencies]
+gif = "0.13"
+png = "0.17"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

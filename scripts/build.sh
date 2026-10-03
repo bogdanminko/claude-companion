@@ -1,14 +1,20 @@
 #!/usr/bin/env bash
-# Builds "build/Claude Companion.app" from the SwiftPM target.
+# Builds the release binary; on macOS also wraps it into "build/Claude Companion.app".
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-swift build -c release
+cargo build --release
+BIN=target/release/claude-companion
+
+if [[ "$(uname -s)" != "Darwin" ]]; then
+    echo "✓ Built: $BIN"
+    exit 0
+fi
 
 APP="build/Claude Companion.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp .build/release/ClaudeCompanion "$APP/Contents/MacOS/ClaudeCompanion"
+cp "$BIN" "$APP/Contents/MacOS/ClaudeCompanion"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 
