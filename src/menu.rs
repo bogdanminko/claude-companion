@@ -12,6 +12,8 @@ pub enum Action {
     Sleep,
     Fiesta,
     ResetPosition,
+    /// Toggle: start Pixel at login (checked when on).
+    Autostart,
     Quit,
 }
 
@@ -20,7 +22,7 @@ pub enum Entry {
     Separator,
 }
 
-pub const ENTRIES: [Entry; 10] = [
+pub const ENTRIES: [Entry; 11] = [
     Entry::Item(Action::Voice),
     Entry::Item(Action::OpenClaude),
     Entry::Item(Action::OpenCode),
@@ -30,6 +32,7 @@ pub const ENTRIES: [Entry; 10] = [
     Entry::Item(Action::Fiesta),
     Entry::Item(Action::ResetPosition),
     Entry::Separator,
+    Entry::Item(Action::Autostart),
     Entry::Item(Action::Quit),
 ];
 
@@ -43,6 +46,7 @@ pub fn title(a: Action, listening: bool) -> &'static str {
         Action::Sleep => "Put to sleep",
         Action::Fiesta => "Fiesta!",
         Action::ResetPosition => "Back to corner",
+        Action::Autostart => "Start at login",
         Action::Quit => "Quit",
     }
 }
@@ -69,7 +73,8 @@ pub fn size(scale: f32) -> (f32, f32) {
         .max()
         .unwrap_or(0);
     let h: f32 = ENTRIES.iter().map(|e| if matches!(e, Entry::Item(_)) { ITEM_H } else { SEP_H }).sum();
-    ((longest as f32 * 8.0 * fp + 4.0 * PAD).ceil(), h + 2.0 * PAD)
+    // + room for the check mark
+    (((longest + 2) as f32 * 8.0 * fp + 4.0 * PAD).ceil(), h + 2.0 * PAD)
 }
 
 pub fn item_at(x: f32, y: f32, scale: f32) -> Option<Action> {
@@ -92,7 +97,10 @@ pub fn item_at(x: f32, y: f32, scale: f32) -> Option<Action> {
     None
 }
 
-pub fn draw(c: &mut Canvas, hovered: Option<Action>, listening: bool) {
+/// Pixel check mark for toggles that are on.
+const CHECK: [&str; 5] = ["......x", ".....x.", "x...x..", ".x.x...", "..x...."];
+
+pub fn draw(c: &mut Canvas, hovered: Option<Action>, listening: bool, autostart: bool) {
     let (w, h) = size(c.scale);
     let fp = font_px(c.scale);
     c.clear(Rgba::rgba(0, 0, 0, 0));
@@ -107,6 +115,16 @@ pub fn draw(c: &mut Canvas, hovered: Option<Action>, listening: bool) {
                 }
                 let ty = top + ((ITEM_H - 8.0 * fp) / 2.0 * c.scale).round() / c.scale;
                 c.text(2.0 * PAD, ty, fp, title(*a, listening), TEXT);
+                if *a == Action::Autostart && autostart {
+                    let (cx, cy) = (w - 2.0 * PAD - 7.0 * fp, ty + 1.5 * fp);
+                    for (r, line) in CHECK.iter().enumerate() {
+                        for (col, ch) in line.chars().enumerate() {
+                            if ch == 'x' {
+                                c.fill_rect(cx + col as f32 * fp, cy + r as f32 * fp, fp, fp, TEXT);
+                            }
+                        }
+                    }
+                }
                 top += ITEM_H;
             }
             Entry::Separator => {

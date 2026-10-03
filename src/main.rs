@@ -14,7 +14,9 @@ use winit::event::{ElementState, MouseButton, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop, EventLoopProxy};
 use winit::window::{Window, WindowAttributes, WindowId, WindowLevel};
 
+mod autostart;
 mod gfx;
+mod instance;
 mod platform;
 mod settings;
 mod supervisor;
@@ -100,6 +102,9 @@ struct App {
     prev_mouse: bool,
     b: BubbleState,
     m: MenuState,
+    autostart: bool,
+    summons: instance::SummonWatch,
+    ticks: u64,
 }
 
 // MARK: Desktop units (see `platform`)
@@ -189,6 +194,9 @@ impl App {
             prev_mouse: false,
             b: BubbleState::default(),
             m: MenuState::default(),
+            autostart: false,
+            summons: instance::SummonWatch::new(),
+            ticks: 0,
         }
     }
 
@@ -263,6 +271,10 @@ impl App {
     // MARK: Ticks
 
     fn tick(&mut self) {
+        self.ticks += 1;
+        if self.ticks % 10 == 0 && self.summons.check() {
+            self.show_pixel(); // launched again while running
+        }
         let step = self.companion.step();
         if let Some(dx) = step.walk_dx {
             let w = self.pixel_window();
@@ -352,7 +364,7 @@ impl App {
 
     fn draw_menu(&mut self) {
         let (Some(gfx), Some(w)) = (&self.gfx, &mut self.menu) else { return };
-        menu::draw(w.canvas(), self.m.item, self.voice.listening);
+        menu::draw(w.canvas(), self.m.item, self.voice.listening, self.autostart);
         gfx.present(&mut w.gl, &w.canvas);
     }
 
@@ -444,6 +456,17 @@ impl App {
 
     // MARK: Actions
 
+    /// Show Pixel (if hidden) and the capsule.
+    fn show_pixel(&mut self) {
+        let pixel = self.pixel_window();
+        if !pixel.is_visible().unwrap_or(true) {
+            pixel.set_visible(true);
+            platform::prepare_window(pixel, WindowKind::Pixel);
+        }
+        self.companion.wake();
+        self.show_bubble();
+    }
+
     /// Double Alt / Option: show Pixel (if hidden) and the capsule; again — hide the capsule.
     fn summon(&mut self) {
         let pixel = self.pixel_window();
@@ -510,6 +533,13 @@ impl App {
                 self.monitors_at = None;
                 self.refresh_monitors(el);
                 self.reset_position();
+            }
+            Action::Autostart => {
+                autostart::set(!self.autostart);
+                self.autostart = autostart::is_enabled();
+                if let Some(t) = &mut self.tray {
+                    t.set_autostart(self.autostart);
+                }
             }
             Action::Quit => el.exit(), // exit 0 → the supervisor / launchd won't restart
         }
@@ -677,7 +707,9 @@ impl ApplicationHandler<UserEvent> for App {
             eprintln!("claude-companion: can't create windows: {e}");
             std::process::exit(1);
         }
-        self.tray = tray::Tray::new(self.proxy.clone());
+        autostart::sync();
+        self.autostart = autostart::is_enabled();
+        self.tray = tray::Tray::new(self.proxy.clone(), self.autostart);
         // Accessibility (macOS) is needed for the global double Option and to press Caps Lock for voice.
         platform::ensure_accessibility(true);
         let now = Instant::now();
@@ -739,6 +771,11 @@ fn main() {
         }
         _ => {}
     }
+
+    let Some(_lock) = instance::acquire() else {
+        instance::summon_running(); // already running: show that one
+        return;
+    };
 
     #[cfg(all(unix, not(target_os = "macos")))]
     if std::env::var_os("DISPLAY").is_none() {

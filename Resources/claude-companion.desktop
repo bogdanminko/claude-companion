@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Claude Companion
+Comment=A tiny pixel Clawd that opens Claude and Claude Code
+Exec=claude-companion --supervise
+Icon=claude-companion
+Terminal=false
+Categories=Utility;
+StartupNotify=false

@@ -31,18 +31,26 @@ pub fn icon_rgba(w: usize, h: usize, p: usize) -> Vec<u8> {
 pub struct Tray {
     _icon: tray_icon::TrayIcon,
     voice: tray_icon::menu::MenuItem,
+    autostart: tray_icon::menu::CheckMenuItem,
     ids: Vec<(tray_icon::menu::MenuId, Action)>,
 }
 
 #[cfg(any(target_os = "macos", target_os = "windows"))]
 impl Tray {
-    pub fn new(_proxy: EventLoopProxy<UserEvent>) -> Option<Tray> {
-        use tray_icon::menu::{Menu, MenuItem, PredefinedMenuItem};
+    pub fn new(_proxy: EventLoopProxy<UserEvent>, autostart_on: bool) -> Option<Tray> {
+        use tray_icon::menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem};
         let menu = Menu::new();
         let mut ids = Vec::new();
         let mut voice = None;
+        let mut autostart = None;
         for e in &menu::ENTRIES {
             match e {
+                Entry::Item(Action::Autostart) => {
+                    let item = CheckMenuItem::new(menu::title(Action::Autostart, false), true, autostart_on, None);
+                    menu.append(&item).ok()?;
+                    ids.push((item.id().clone(), Action::Autostart));
+                    autostart = Some(item);
+                }
                 Entry::Item(a) => {
                     let item = MenuItem::new(menu::title(*a, false), true, None);
                     menu.append(&item).ok()?;
@@ -64,11 +72,15 @@ impl Tray {
             .build()
             .map_err(|e| eprintln!("claude-companion: no tray icon: {e}"))
             .ok()?;
-        Some(Tray { _icon: tray, voice: voice?, ids })
+        Some(Tray { _icon: tray, voice: voice?, autostart: autostart?, ids })
     }
 
     pub fn set_listening(&mut self, on: bool) {
         self.voice.set_text(menu::title(Action::Voice, on));
+    }
+
+    pub fn set_autostart(&mut self, on: bool) {
+        self.autostart.set_checked(on);
     }
 
     pub fn poll(&self) -> Option<Action> {
@@ -86,6 +98,7 @@ pub struct Tray {
 pub struct Sni {
     proxy: EventLoopProxy<UserEvent>,
     listening: bool,
+    autostart: bool,
 }
 
 #[cfg(all(unix, not(target_os = "macos")))]
@@ -108,6 +121,15 @@ impl ksni::Tray for Sni {
         menu::ENTRIES
             .iter()
             .map(|e| match e {
+                Entry::Item(Action::Autostart) => ksni::menu::CheckmarkItem {
+                    label: menu::title(Action::Autostart, false).into(),
+                    checked: self.autostart,
+                    activate: Box::new(|t: &mut Sni| {
+                        let _ = t.proxy.send_event(UserEvent::Action(Action::Autostart));
+                    }),
+                    ..Default::default()
+                }
+                .into(),
                 Entry::Item(a) => {
                     let a = *a;
                     ksni::menu::StandardItem {
@@ -127,15 +149,21 @@ impl ksni::Tray for Sni {
 
 #[cfg(all(unix, not(target_os = "macos")))]
 impl Tray {
-    pub fn new(proxy: EventLoopProxy<UserEvent>) -> Option<Tray> {
+    pub fn new(proxy: EventLoopProxy<UserEvent>, autostart: bool) -> Option<Tray> {
         use ksni::blocking::TrayMethods;
-        let handle =
-            Sni { proxy, listening: false }.spawn().map_err(|e| eprintln!("claude-companion: no tray icon: {e}")).ok()?;
+        let handle = Sni { proxy, listening: false, autostart }
+            .spawn()
+            .map_err(|e| eprintln!("claude-companion: no tray icon: {e}"))
+            .ok()?;
         Some(Tray { handle })
     }
 
     pub fn set_listening(&mut self, on: bool) {
         self.handle.update(|t| t.listening = on);
+    }
+
+    pub fn set_autostart(&mut self, on: bool) {
+        self.handle.update(|t| t.autostart = on);
     }
 
     pub fn poll(&self) -> Option<Action> {

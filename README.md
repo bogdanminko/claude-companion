@@ -34,10 +34,30 @@ The rest of the time it just lives there: blinks, shuffles its legs, gets bored 
 - **double click** — it glitches; **drag** it and its legs run in the air;
 - **double Alt** (**double Option** on a Mac) from any app shows the capsule;
 - **voice** — Claude voice input via Caps Lock, Pixel flaps its arms while you talk;
-- right click / tray or menu bar icon: voice, open Claude / Claude Code, hide, sleep, fiesta, back to corner, quit;
+- right click / tray or menu bar icon: voice, open Claude / Claude Code, hide, sleep, fiesta, back to corner, start at login, quit;
 - starts at login and restarts after a crash (LaunchAgent on macOS, `--supervise` on Windows and Linux).
 
-## Install
+## Download
+
+Grab the file for your system from the [latest release](https://github.com/bogdanminko/claude-companion/releases/latest):
+
+| System | File | How |
+| --- | --- | --- |
+| macOS 11+ (Apple Silicon and Intel) | `ClaudeCompanion-macOS.dmg` | drag to Applications, open |
+| Windows 10 / 11 | `ClaudeCompanion-Setup.exe` | run the installer; or just run `ClaudeCompanion-portable.exe` |
+| Linux (Debian, Ubuntu…) | `claude-companion_amd64.deb` | `sudo apt install ./claude-companion_amd64.deb`, then start it from the app menu |
+| Linux (any) | `claude-companion-linux-x86_64.tar.gz` | unpack, run `./claude-companion` |
+
+Pixel turns on **Start at login** on its first launch; switch it off in the right-click or tray menu.
+Launching it again while it runs just brings Pixel back.
+
+The builds are not signed with paid certificates yet, so the OS asks once:
+
+- **macOS**: "Apple could not verify…" → System Settings → Privacy & Security → **Open Anyway**
+  (or `xattr -dr com.apple.quarantine "/Applications/Claude Companion.app"`). Then grant **Accessibility**, see below.
+- **Windows**: SmartScreen "Windows protected your PC" → **More info** → **Run anyway**.
+
+## Build from source
 
 Requires [Rust](https://rustup.rs) to build. [Claude Desktop](https://claude.ai/download) is optional: without it
 Pixel opens claude.ai in the browser, and Claude Code in a terminal if the `claude` CLI is installed.
@@ -115,11 +135,15 @@ src/
   voice.rs        — Claude voice input via Caps Lock
   tray.rs         — tray / menu bar icon (native on macOS and Windows, StatusNotifierItem on Linux)
   supervisor.rs   — --supervise: restart after a crash, log to the cache folder
+  autostart.rs    — start at login: LaunchAgent / HKCU Run / XDG autostart, set up by the app itself
+  instance.rs     — one Pixel per user; a second launch brings the running one back
   platform/       — macOS (AppKit, CoreGraphics), Windows (Win32), Linux (X11): keys, cursor,
                     work area, window flags, opening Claude
 examples/         — sprite preview, demo GIF recorder, icon generator
 launchd/          — LaunchAgent template (macOS)
 scripts/          — build / install / uninstall (.sh for macOS and Linux, .ps1 for Windows)
+installer/        — Windows installer (Inno Setup)
+.github/workflows — CI on all three systems; release.yml builds the downloads on a v* tag
 ```
 
 Everything is drawn in code, no image assets. Each quadrant of the CLI banner `▐▛███▜▌ / ▝▜█████▛▘ / ▘▘ ▝▝`

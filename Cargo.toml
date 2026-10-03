@@ -2,6 +2,7 @@
 name = "claude-companion"
 version = "0.2.0"
 edition = "2021"
+repository = "https://github.com/bogdanminko/claude-companion"
 description = "A tiny pixel Clawd that lives on your desktop and opens Claude or Claude Code in one move"
 license = "MIT"
 publish = false
@@ -53,6 +54,20 @@ winresource = "0.1"
 [dev-dependencies]
 gif = "0.13"
 png = "0.17"
+
+[package.metadata.deb]
+maintainer = "Claude Companion contributors"
+copyright = "Claude Companion contributors, MIT"
+section = "utils"
+priority = "optional"
+depends = "libc6, libx11-6, libxtst6, libxkbcommon-x11-0, libgl1 | libegl1"
+extended-description = """A tiny pixel Clawd that lives on your desktop and opens Claude or Claude Code in one move.
+Unofficial fan project, not affiliated with Anthropic."""
+assets = [
+    ["target/release/claude-companion", "usr/bin/", "755"],
+    ["Resources/claude-companion.desktop", "usr/share/applications/", "644"],
+    ["Resources/claude-companion.png", "usr/share/icons/hicolor/256x256/apps/", "644"],
+]
 
 [profile.release]
 opt-level = "s"

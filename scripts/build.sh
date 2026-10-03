@@ -3,8 +3,20 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-cargo build --release
-BIN=target/release/claude-companion
+# UNIVERSAL=1 on macOS: one binary for Apple Silicon and Intel (for releases)
+if [[ "$(uname -s)" == "Darwin" && "${UNIVERSAL:-0}" == "1" ]]; then
+    rustup target add aarch64-apple-darwin x86_64-apple-darwin >/dev/null
+    cargo build --release --target aarch64-apple-darwin
+    cargo build --release --target x86_64-apple-darwin
+    BIN=target/release/claude-companion
+    mkdir -p target/release
+    lipo -create -output "$BIN" \
+        target/aarch64-apple-darwin/release/claude-companion \
+        target/x86_64-apple-darwin/release/claude-companion
+else
+    cargo build --release
+    BIN=target/release/claude-companion
+fi
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
     echo "✓ Built: $BIN"
