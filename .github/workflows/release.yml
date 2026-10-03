@@ -1,0 +1,94 @@
+# Ready-to-run downloads: push a tag like v0.2.0 → a GitHub Release with
+#   macOS .dmg (universal: Apple Silicon + Intel), Windows installer + portable .exe, Linux .deb + .tar.gz.
+# Run it by hand (Actions → release → Run workflow) to get the files as build artifacts without a release.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
+      - name: Version from the tag
+        run: echo "VERSION=$(echo "${GITHUB_REF_NAME}" | sed -n 's/^v//p')" >> "$GITHUB_ENV"
+      - name: Build the universal app
+        run: |
+          if [ -n "$VERSION" ]; then
+            /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" Resources/Info.plist
+          fi
+          UNIVERSAL=1 ./scripts/build.sh
+          lipo -info "build/Claude Companion.app/Contents/MacOS/ClaudeCompanion"
+      - name: Disk image
+        run: |
+          mkdir -p dist dmg
+          cp -R "build/Claude Companion.app" dmg/
+          ln -s /Applications dmg/Applications
+          hdiutil create -volname "Claude Companion" -srcfolder dmg -ov -format UDZO dist/ClaudeCompanion-macOS.dmg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: dist/*
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo build --release
+      - name: Installer and portable exe
+        shell: pwsh
+        run: |
+          $version = if ($env:GITHUB_REF_NAME -match '^v(.+)$') { $Matches[1] } else { "0.0.0" }
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\iscc.exe"
+          if (!(Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
+          & $iscc "/DAppVersion=$version" installer\windows.iss
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Copy-Item target\release\claude-companion.exe dist\ClaudeCompanion-portable.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/*
+
+  linux:
+    runs-on: ubuntu-22.04 # older glibc: runs on more distributions
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo build --release
+      - name: .deb and .tar.gz
+        run: |
+          cargo install cargo-deb --locked
+          mkdir -p dist
+          cargo deb --no-build --output dist/
+          mv dist/*.deb dist/claude-companion_amd64.deb
+          mkdir -p pkg/claude-companion
+          cp target/release/claude-companion Resources/claude-companion.desktop Resources/claude-companion.png pkg/claude-companion/
+          tar -C pkg -czf dist/claude-companion-linux-x86_64.tar.gz claude-companion
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: dist/*
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [macos, windows, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

@@ -4,9 +4,11 @@
 
 # Claude Companion
 
-**A tiny pixel Clawd that lives on your Mac desktop and opens Claude or Claude Code in one move.**
+**A tiny pixel Clawd that lives on your desktop and opens Claude or Claude Code in one move.**
 
-macOS 13+ · Swift · no dependencies
+macOS · Windows · Linux · Rust · one small binary
+
+**[⬇ Download](#download)**
 
 </div>
 
@@ -28,18 +30,50 @@ The rest of the time it just lives there: blinks, shuffles its legs, gets bored 
 
 ## Features
 
-- floats above all windows on every Space; drag it anywhere, it remembers the spot;
+- floats above all windows on every desktop / Space; drag it anywhere, it remembers the spot;
 - a random trick every 8–25 seconds when idle — walks off sideways, jumps, shivers, waves, glitches, or puts on a sombrero and plays guitar;
 - blushes and looks up on hover, falls asleep after 5 minutes without attention;
 - **double click** — it glitches; **drag** it and its legs run in the air;
-- **double Option** from any app shows the capsule;
+- **double Alt** (**double Option** on a Mac) from any app shows the capsule;
 - **voice** — Claude voice input via Caps Lock, Pixel flaps its arms while you talk;
-- right click / menu bar icon: voice, open Claude / Claude Code, hide, sleep, fiesta, back to corner, quit;
-- runs as a LaunchAgent: starts at login, restarts after a crash.
+- right click / tray or menu bar icon: voice, open Claude / Claude Code, hide, sleep, fiesta, back to corner, start at login, quit;
+- starts at login and restarts after a crash (LaunchAgent on macOS, `--supervise` on Windows and Linux).
 
-## Install
+## Download
 
-Requires macOS 13+, Swift 5.10+ (Xcode or Command Line Tools) and [Claude Desktop](https://claude.ai/download).
+<div align="center">
+
+[![Download for macOS](https://img.shields.io/badge/Download-macOS-D97757?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/bogdanminko/claude-companion/releases/latest/download/ClaudeCompanion-macOS.dmg)
+[![Download for Windows](https://img.shields.io/badge/Download-Windows-D97757?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/bogdanminko/claude-companion/releases/latest/download/ClaudeCompanion-Setup.exe)
+[![Download for Linux](https://img.shields.io/badge/Download-Linux%20.deb-D97757?style=for-the-badge&logo=linux&logoColor=white)](https://github.com/bogdanminko/claude-companion/releases/latest/download/claude-companion_amd64.deb)
+
+</div>
+
+Each button downloads the file from the [latest release](https://github.com/bogdanminko/claude-companion/releases/latest).
+
+| System | Download | How |
+| --- | --- | --- |
+| macOS 11+ (Apple Silicon and Intel) | [ClaudeCompanion-macOS.dmg](https://github.com/bogdanminko/claude-companion/releases/latest/download/ClaudeCompanion-macOS.dmg) | drag to Applications, open |
+| Windows 10 / 11 | [ClaudeCompanion-Setup.exe](https://github.com/bogdanminko/claude-companion/releases/latest/download/ClaudeCompanion-Setup.exe) | run the installer |
+| Windows, no install | [ClaudeCompanion-portable.exe](https://github.com/bogdanminko/claude-companion/releases/latest/download/ClaudeCompanion-portable.exe) | just run it |
+| Linux (Debian, Ubuntu…) | [claude-companion_amd64.deb](https://github.com/bogdanminko/claude-companion/releases/latest/download/claude-companion_amd64.deb) | `sudo apt install ./claude-companion_amd64.deb`, start from the app menu |
+| Linux (any) | [claude-companion-linux-x86_64.tar.gz](https://github.com/bogdanminko/claude-companion/releases/latest/download/claude-companion-linux-x86_64.tar.gz) | unpack, run `./claude-companion` |
+
+Pixel turns on **Start at login** on its first launch; switch it off in the right-click or tray menu.
+Launching it again while it runs just brings Pixel back.
+
+The builds are not signed with paid certificates yet, so the OS asks once:
+
+- **macOS**: "Apple could not verify…" → System Settings → Privacy & Security → **Open Anyway**
+  (or `xattr -dr com.apple.quarantine "/Applications/Claude Companion.app"`). Then grant **Accessibility**, see below.
+- **Windows**: SmartScreen "Windows protected your PC" → **More info** → **Run anyway**.
+
+## Build from source
+
+Requires [Rust](https://rustup.rs) to build. [Claude Desktop](https://claude.ai/download) is optional: without it
+Pixel opens claude.ai in the browser, and Claude Code in a terminal if the `claude` CLI is installed.
+
+### macOS 11+
 
 ```bash
 git clone https://github.com/bogdanminko/claude-companion.git
@@ -53,42 +87,81 @@ System Settings → Privacy & Security → Accessibility → enable **Claude Com
 > The build is ad-hoc signed, so macOS asks for access again after every reinstall —
 > `install.sh` resets the stale entry for you.
 
+### Windows 10 / 11
+
+```powershell
+git clone https://github.com/bogdanminko/claude-companion.git
+cd claude-companion
+powershell -ExecutionPolicy Bypass -File scripts\install.ps1
+```
+
+Installs to `%LOCALAPPDATA%\Programs\ClaudeCompanion`, adds a Start menu shortcut and a login entry
+(`HKCU\…\Run`). Remove with `scripts\uninstall.ps1`.
+
+### Linux
+
+```bash
+git clone https://github.com/bogdanminko/claude-companion.git
+cd claude-companion
+make install
+```
+
+Installs `~/.local/bin/claude-companion`, an app menu entry and an XDG autostart entry. Remove with `make uninstall`.
+
+- Needs X11 or XWayland (on Wayland sessions Pixel runs through XWayland: Wayland doesn't let windows place
+  themselves) and a compositor for transparency — every mainstream desktop has one.
+- Runtime libraries present on any desktop: libX11, libXtst, libxkbcommon-x11, libGL / libEGL.
+- Tray icon: KDE, Xfce, Cinnamon, MATE; GNOME needs the AppIndicator extension. Without a tray the right-click menu has everything.
+- Double Alt and Caps Lock tracking see key presses in X11 / XWayland apps; native Wayland apps hide them.
+- Claude Desktop has no official Linux build; community builds (`claude-desktop`) are picked up automatically.
+
 For voice, enable Caps Lock voice input in Claude settings.
 
 ## Commands
 
 | Command | What it does |
 | --- | --- |
-| `make install` | build, copy to `~/Applications`, register the LaunchAgent |
+| `make install` | build, install, register autostart (macOS / Linux) |
 | `make run` | build and run without installing |
-| `make restart` | restart the agent |
-| `make logs` | tail `/tmp/claude-companion.*.log` |
+| `make restart` | restart the installed copy |
+| `make logs` | tail the logs |
 | `make uninstall` | stop and remove |
+| `make test` | unit tests |
 | `make preview` | render all sprite states to `build/preview.png` |
 | `make demo` | re-record the GIFs in `docs/` |
-| `make icon` | regenerate `Resources/AppIcon.icns` from the sprite |
+| `make icon` | regenerate the app icons in `Resources/` from the sprite |
 
 ## How it works
 
 ```
-Sources/ClaudeCompanion/
-  main.swift                 — entry point, no Dock icon
-  AppDelegate.swift          — menu bar and context menu
-  CompanionPanel.swift       — transparent floating window
-  CompanionView.swift        — moods, tricks, animation, mouse
-  PixelSprite.swift          — Clawd, 18×10 pixels, block for block from the CLI banner
-  BubblePanel.swift          — Claude / Claude Code capsule
-  DoubleOptionDetector.swift — global double Option
-  ClaudeApp.swift            — opening Claude (claude://code/new), Caps Lock voice
-tools/                       — sprite preview, demo GIF recorder, icon generator
-launchd/                     — LaunchAgent template
-scripts/                     — build / install / uninstall
+src/
+  main.rs         — windows, mouse, drag, capsule / menu wiring, tray and hotkey polling
+  companion.rs    — moods, tricks, animation (no OS code)
+  sprite.rs       — Clawd, 18×10 pixels, block for block from the CLI banner
+  bubble.rs       — Claude / Claude Code capsule
+  menu.rs         — right-click menu, drawn in an 8×8 pixel font
+  canvas.rs       — tiny software renderer: pixel blocks, rounded shapes, text
+  gfx.rs          — puts canvases on transparent windows (OpenGL texture)
+  hotkey.rs       — double Alt / Option and Caps Lock from polled key state
+  voice.rs        — Claude voice input via Caps Lock
+  tray.rs         — tray / menu bar icon (native on macOS and Windows, StatusNotifierItem on Linux)
+  supervisor.rs   — --supervise: restart after a crash, log to the cache folder
+  autostart.rs    — start at login: LaunchAgent / HKCU Run / XDG autostart, set up by the app itself
+  instance.rs     — one Pixel per user; a second launch brings the running one back
+  platform/       — macOS (AppKit, CoreGraphics), Windows (Win32), Linux (X11): keys, cursor,
+                    work area, window flags, opening Claude
+examples/         — sprite preview, demo GIF recorder, icon generator
+launchd/          — LaunchAgent template (macOS)
+scripts/          — build / install / uninstall (.sh for macOS and Linux, .ps1 for Windows)
+installer/        — Windows installer (Inno Setup)
+.github/workflows — CI on all three systems; release.yml builds the downloads on a v* tag
 ```
 
-The sprite is drawn in code, no image assets. Each quadrant of the CLI banner `▐▛███▜▌ / ▝▜█████▛▘ / ▘▘ ▝▝`
-becomes two square pixels (terminal cells are twice as tall as wide). Change shapes in `PixelSprite.swift`, check with `make preview`.
+Everything is drawn in code, no image assets. Each quadrant of the CLI banner `▐▛███▜▌ / ▝▜█████▛▘ / ▘▘ ▝▝`
+becomes two square pixels (terminal cells are twice as tall as wide). Change shapes in `sprite.rs`, check with `make preview`.
 
-`KeepAlive` is `SuccessfulExit = false`: Quit closes it until next login, a crash restarts it.
+On macOS `KeepAlive` is `SuccessfulExit = false`; elsewhere `--supervise` does the same: Quit closes Pixel until
+next login, a crash restarts it.
 
 ## License
 
