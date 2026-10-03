@@ -28,15 +28,17 @@ The rest of the time it just lives there: blinks, shuffles its legs, gets bored 
 | <img src="docs/idle.gif" width="130"><br>idle | <img src="docs/jump.gif" width="130"><br>jump | <img src="docs/wave.gif" width="130"><br>wave | <img src="docs/look.gif" width="130"><br>look around |
 | <img src="docs/shake.gif" width="130"><br>shiver | <img src="docs/glitch.gif" width="130"><br>glitch | <img src="docs/fiesta.gif" width="130"><br>fiesta 🎸 | <img src="docs/sleep.gif" width="130"><br>sleep |
 
+<p align="center"><img src="docs/clones.gif" width="260" alt="Pixel vanishes in smoke and five small clones pop out"><br>shadow clone technique 🥷</p>
+
 ## Features
 
 - floats above all windows on every desktop / Space; drag it anywhere, it remembers the spot;
-- a random trick every 8–25 seconds when idle — walks off sideways, jumps, shivers, waves, glitches, or puts on a sombrero and plays guitar;
+- a random trick every 8–25 seconds when idle — walks off sideways, jumps, shivers, waves, glitches, or puts on a sombrero and plays guitar; once in a while it vanishes in a puff of smoke and splits into five small clones;
 - blushes and looks up on hover, falls asleep after 5 minutes without attention;
 - **double click** — it glitches; **drag** it and its legs run in the air;
 - **double Alt** (**double Option** on a Mac) from any app shows the capsule;
 - **voice** — Claude voice input via Caps Lock, Pixel flaps its arms while you talk;
-- right click / tray or menu bar icon: voice, open Claude / Claude Code, hide, sleep, fiesta, back to corner, start at login, quit;
+- right click / tray or menu bar icon: voice, open Claude / Claude Code, hide, sleep, fiesta, shadow clones, back to corner, start at login, quit;
 - starts at login and restarts after a crash (LaunchAgent on macOS, `--supervise` on Windows and Linux).
 
 ## Download
