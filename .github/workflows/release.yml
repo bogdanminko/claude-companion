@@ -28,12 +28,24 @@ jobs:
           fi
           UNIVERSAL=1 ./scripts/build.sh
           lipo -info "build/Claude Companion.app/Contents/MacOS/ClaudeCompanion"
+      # the familiar window: Pixel on the left, an arrow, Applications on the right
+      # (icon spots match the arrow in examples/dmg_background.rs)
       - name: Disk image
         run: |
           mkdir -p dist dmg
           cp -R "build/Claude Companion.app" dmg/
-          ln -s /Applications dmg/Applications
-          hdiutil create -volname "Claude Companion" -srcfolder dmg -ov -format UDZO dist/ClaudeCompanion-macOS.dmg
+          tiffutil -cathidpicheck Resources/dmg-background.png Resources/dmg-background@2x.png -out build/dmg-background.tiff
+          brew install create-dmg
+          if ! create-dmg --volname "Claude Companion" --background build/dmg-background.tiff \
+              --window-pos 200 120 --window-size 600 400 --icon-size 128 \
+              --icon "Claude Companion.app" 160 190 --hide-extension "Claude Companion.app" \
+              --app-drop-link 440 190 dist/ClaudeCompanion-macOS.dmg dmg/; then
+            # Finder scripting can time out on CI: fall back to a plain image
+            echo "::warning::create-dmg failed, building a plain disk image"
+            rm -f dist/ClaudeCompanion-macOS.dmg
+            ln -s /Applications dmg/Applications
+            hdiutil create -volname "Claude Companion" -srcfolder dmg -ov -format UDZO dist/ClaudeCompanion-macOS.dmg
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: macos
