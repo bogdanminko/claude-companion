@@ -1,5 +1,5 @@
 ; Windows installer (Inno Setup 6): per-user, no admin rights.
-;   iscc /DAppVersion=0.2.1 installer\windows.iss   →  dist\ClaudeCompanion-Setup.exe
+;   iscc /DAppVersion=0.2.2 installer\windows.iss   →  dist\ClaudeCompanion-Setup.exe
 #ifndef AppVersion
   #define AppVersion "0.0.0"
 #endif
