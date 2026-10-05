@@ -350,7 +350,7 @@ dependencies = [
 
 [[package]]
 name = "claude-companion"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "dirs 6.0.0",
  "font8x8",

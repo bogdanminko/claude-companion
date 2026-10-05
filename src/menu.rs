@@ -54,18 +54,19 @@ pub fn title(a: Action, listening: bool) -> &'static str {
     }
 }
 
-const PAD: f32 = 6.0;
-const ITEM_H: f32 = 22.0;
-const SEP_H: f32 = 9.0;
+const PAD: f32 = 3.2;
+const ITEM_H: f32 = 13.6;
+const SEP_H: f32 = 5.6;
 const BG: Rgba = Rgba::rgba(41, 41, 43, 248);
 const BORDER: Rgba = Rgba::rgba(255, 255, 255, 31);
 const TEXT: Rgba = Rgba::rgba(236, 236, 236, 255);
 const SEP: Rgba = Rgba::rgba(255, 255, 255, 36);
 const HIGHLIGHT: Rgba = crate::sprite::BODY;
 
-/// Font pixel size snapped to whole physical pixels, so the 8×8 glyphs stay even.
+/// Font pixel size; not snapped to physical pixels, so glyph pixels may be slightly uneven.
 fn font_px(scale: f32) -> f32 {
-    (1.5 * scale).round().max(1.0) / scale
+    let _ = scale;
+    1.2
 }
 
 pub fn size(scale: f32) -> (f32, f32) {
