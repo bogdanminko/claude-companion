@@ -84,11 +84,20 @@ jobs:
     needs: [macos, windows, linux]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/release-notes
       - uses: actions/download-artifact@v4
         with:
           path: dist
           merge-multiple: true
+      # hand-written notes from .github/release-notes/<tag>.md when there are some; the change list goes below
+      - name: Release notes
+        run: |
+          notes=".github/release-notes/${GITHUB_REF_NAME}.md"
+          if [ -f "$notes" ]; then cp "$notes" notes.md; else : > notes.md; fi
       - uses: softprops/action-gh-release@v2
         with:
           files: dist/*
+          body_path: notes.md
           generate_release_notes: true

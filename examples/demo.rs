@@ -43,5 +43,6 @@ fn main() {
     record(&dir, "wave", 24, |c| c.start_trick(Trick::Wave));
     record(&dir, "look", 24, |c| c.start_trick(Trick::Look));
     record(&dir, "shake", 20, |c| c.start_trick(Trick::Shake));
+    record(&dir, "clones", 78, |c| c.start_trick(Trick::Clones));
     record(&dir, "sleep", 40, |c| c.go_to_sleep());
 }
