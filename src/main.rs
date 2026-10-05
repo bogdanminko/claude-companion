@@ -15,6 +15,7 @@ use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop, EventLoopProxy}
 use winit::window::{Window, WindowAttributes, WindowId, WindowLevel};
 
 mod autostart;
+#[cfg_attr(target_os = "macos", path = "gfx_mac.rs")]
 mod gfx;
 mod instance;
 mod platform;
