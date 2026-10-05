@@ -42,7 +42,7 @@ void main() {
 const FRAGMENT: &str = "
 varying vec2 uv;
 uniform sampler2D tex;
-void main() { gl_FragColor = texture2D(tex, uv); }";
+void main() { FRAG_COLOR = texture2D(tex, uv); }";
 
 impl Gfx {
     /// Creates the GL display and context together with the first window.
@@ -156,10 +156,18 @@ fn create_surface(config: &Config, window: &Window) -> Result<Surface<WindowSurf
 
 unsafe fn setup(gl: &glow::Context) -> Result<(glow::Program, glow::Buffer), Box<dyn Error>> {
     let version = gl.version();
-    let header = if version.is_embedded { "#version 100\nprecision mediump float;\n" } else { "#version 120\n" };
+    // macOS only hands out core profiles (3.2+), which reject the GLSL 1.20 keywords
+    let core = !version.is_embedded && version.major >= 3;
+    let header = |kind| match (version.is_embedded, core, kind) {
+        (true, ..) => "#version 100\nprecision mediump float;\n#define FRAG_COLOR gl_FragColor\n",
+        (_, true, glow::VERTEX_SHADER) => "#version 150\n#define attribute in\n#define varying out\n",
+        (_, true, _) => "#version 150\n#define varying in\n#define texture2D texture\nout vec4 frag_color;\n#define FRAG_COLOR frag_color\n",
+        _ => "#version 120\n#define FRAG_COLOR gl_FragColor\n",
+    };
     let program = gl.create_program()?;
     let mut shaders = Vec::new();
     for (kind, src) in [(glow::VERTEX_SHADER, VERTEX), (glow::FRAGMENT_SHADER, FRAGMENT)] {
+        let header = header(kind);
         let s = gl.create_shader(kind)?;
         gl.shader_source(s, &format!("{header}{src}"));
         gl.compile_shader(s);
@@ -184,7 +192,7 @@ unsafe fn setup(gl: &glow::Context) -> Result<(glow::Program, glow::Buffer), Box
     }
 
     // core profiles need a bound vertex array object; legacy and ES 2 contexts may not have one
-    if !version.is_embedded && version.major >= 3 {
+    if core {
         if let Ok(vao) = gl.create_vertex_array() {
             gl.bind_vertex_array(Some(vao));
         }
