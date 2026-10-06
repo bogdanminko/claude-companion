@@ -392,17 +392,17 @@ impl Companion {
 
 /// A cigarette at the right side of the mouth, a wisp from the ember, and rings blown after the drag.
 fn draw_smoke(c: &mut Canvas, t: i32, ox: f32, oy: f32, p: f32) {
-    let y = oy + (sprite::TOP as f32 + 5.0) * p + p * 0.25;
-    let h = p * 0.5;
+    let y = oy + (sprite::TOP as f32 + 5.0) * p;
+    let h = p;
     let x0 = ox + 14.0 * p;
-    c.fill_rect(x0, y, p, h, FILTER);
-    c.fill_rect(x0 + p, y, p * 2.0, h, PAPER);
+    c.fill_rect(x0, y, p * 1.5, h, FILTER);
+    c.fill_rect(x0 + p * 1.5, y, p * 3.5, h, PAPER);
     let inhaling = t < DRAG_END;
     let ember = if inhaling && t % 2 == 0 { EMBER_HOT } else { EMBER };
-    c.fill_rect(x0 + p * 3.0, y, p * 0.6, h, ember);
+    c.fill_rect(x0 + p * 5.0, y, p, h, ember);
 
     // a thin wisp curling up from the ember
-    let (ex, ey) = (x0 + p * 3.3, y - 2.0);
+    let (ex, ey) = (x0 + p * 5.5, y - 2.0);
     for k in 0..6 {
         let ph = (t + k * 3) % 18;
         let wiggle = ((ph as f32 * 0.7 + k as f32).sin() * 2.0).round();
