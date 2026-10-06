@@ -30,6 +30,8 @@ The rest of the time it just lives there: blinks, shuffles its legs, gets bored 
 
 <p align="center"><img src="docs/clones.gif" width="260" alt="Pixel vanishes in smoke and five small clones pop out"><br>shadow clone technique 🥷</p>
 
+<p align="center"><img src="docs/smoke.gif" width="260" alt="Pixel takes a drag and blows smoke rings"><br>smoke break 🚬</p>
+
 ## Features
 
 - floats above all windows on every desktop / Space; drag it anywhere, it remembers the spot;
