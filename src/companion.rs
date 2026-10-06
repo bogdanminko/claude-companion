@@ -63,9 +63,9 @@ const EMBER_HOT: Rgba = Rgba::rgba(255, 220, 90, 255);
 // Smoke break, in ticks from the start of the trick
 const SMOKE_LENGTH: i32 = 70;
 const DRAG_END: i32 = 14; // inhaling: eyes shut, ember glows
-const RINGS_START: i32 = 20; // a ring every RING_EVERY ticks
-const RING_EVERY: i32 = 9;
-const RING_LIFE: i32 = 24;
+const RINGS_START: i32 = 16; // a ring every RING_EVERY ticks
+const RING_EVERY: i32 = 6;
+const RING_LIFE: i32 = 28;
 
 // Shadow clones, in ticks from the start of the trick
 const CLONES_LENGTH: i32 = 76;
@@ -403,11 +403,12 @@ fn draw_smoke(c: &mut Canvas, t: i32, ox: f32, oy: f32, p: f32) {
 
     // a thin wisp curling up from the ember
     let (ex, ey) = (x0 + p * 5.5, y - 2.0);
-    for k in 0..6 {
-        let ph = (t + k * 3) % 18;
-        let wiggle = ((ph as f32 * 0.7 + k as f32).sin() * 2.0).round();
-        let cell = 2.0;
-        c.fill_rect(ex + wiggle, ey - ph as f32 * 1.6, cell, cell, SMOKE_SHADE.alpha(0.6 * (1.0 - ph as f32 / 18.0)));
+    for k in 0..12 {
+        let ph = (t + k * 2) % 24;
+        let wiggle = ((ph as f32 * 0.5 + k as f32).sin() * 3.0).round();
+        let cell = 3.0;
+        let color = if k % 2 == 0 { SMOKE } else { SMOKE_SHADE };
+        c.fill_rect(ex + wiggle - 1.0, ey - ph as f32 * 1.6, cell, cell, color.alpha(0.8 * (1.0 - ph as f32 / 24.0)));
     }
 
     // smoke rings: born at the ember, they grow and drift up and away, fading
@@ -418,7 +419,7 @@ fn draw_smoke(c: &mut Canvas, t: i32, ox: f32, oy: f32, p: f32) {
             let f = age as f32 / RING_LIFE as f32;
             let cx = ex + 2.0 + (f * 5.0).sin() * 3.0;
             let cy = ey - 8.0 - f * 52.0;
-            ring(c, cx, cy, 3.0 + f * 9.0, 1.0 - f);
+            ring(c, cx, cy, 4.0 + f * 13.0, 1.0 - f);
         }
         start += RING_EVERY;
     }
@@ -432,7 +433,7 @@ fn ring(c: &mut Canvas, cx: f32, cy: f32, r: f32, fade: f32) {
         for i in -n..=n {
             let (x, y) = (i as f32 * cell, j as f32 * cell);
             let d = ((x / r).powi(2) + (y / (r * 0.55)).powi(2)).sqrt();
-            if (d - 1.0).abs() < 0.22 {
+            if (d - 1.0).abs() < 0.32 {
                 let color = if y > 0.0 { SMOKE_SHADE } else { SMOKE };
                 c.fill_rect(cx + x - cell / 2.0, cy + y - cell / 2.0, cell, cell, color.alpha(fade));
             }
