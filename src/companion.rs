@@ -31,11 +31,14 @@ pub enum Trick {
     Fiesta,
     /// Shadow clone technique: Pixel vanishes in a puff of smoke, five small copies pop out, then merge back.
     Clones,
+    /// Smoke break: a long drag with eyes shut, then smoke rings drifting up.
+    Smoke,
 }
 
 impl Trick {
     /// Everyday tricks; clones are a rare treat on top.
-    const ALL: [Trick; 7] = [Trick::Walk, Trick::Jump, Trick::Shake, Trick::Wave, Trick::Look, Trick::Glitch, Trick::Fiesta];
+    const ALL: [Trick; 8] =
+        [Trick::Walk, Trick::Jump, Trick::Shake, Trick::Wave, Trick::Look, Trick::Glitch, Trick::Fiesta, Trick::Smoke];
 }
 
 /// What the app should do after a tick.
@@ -52,6 +55,17 @@ const NOTE_COLOR: Rgba = Rgba::rgba(250, 217, 115, 255);
 const ZZZ_COLOR: Rgba = Rgba::rgba(166, 179, 242, 255);
 const SMOKE: Rgba = Rgba::rgba(242, 238, 232, 255);
 const SMOKE_SHADE: Rgba = Rgba::rgba(184, 178, 172, 255);
+const PAPER: Rgba = Rgba::rgba(245, 242, 236, 255);
+const FILTER: Rgba = Rgba::rgba(222, 160, 90, 255);
+const EMBER: Rgba = Rgba::rgba(255, 90, 40, 255);
+const EMBER_HOT: Rgba = Rgba::rgba(255, 220, 90, 255);
+
+// Smoke break, in ticks from the start of the trick
+const SMOKE_LENGTH: i32 = 70;
+const DRAG_END: i32 = 14; // inhaling: eyes shut, ember glows
+const RINGS_START: i32 = 16; // a ring every RING_EVERY ticks
+const RING_EVERY: i32 = 6;
+const RING_LIFE: i32 = 28;
 
 // Shadow clones, in ticks from the start of the trick
 const CLONES_LENGTH: i32 = 76;
@@ -125,7 +139,7 @@ impl Companion {
 
     fn update_trick(&mut self) -> Step {
         let keeps_on_hover =
-            self.mood == Mood::Hover && matches!(self.trick, Some(Trick::Fiesta | Trick::Glitch | Trick::Clones));
+            self.mood == Mood::Hover && matches!(self.trick, Some(Trick::Fiesta | Trick::Glitch | Trick::Clones | Trick::Smoke));
         if self.mood != Mood::Idle && !keeps_on_hover {
             return Step { walk_dx: None, walk_ended: self.stop_trick() };
         }
@@ -158,6 +172,7 @@ impl Companion {
             Trick::Glitch => 15,
             Trick::Fiesta => 60,
             Trick::Clones => CLONES_LENGTH,
+            Trick::Smoke => SMOKE_LENGTH,
             _ => 12,
         };
         self.walk_dir = if self.rng.range(0, 1) == 0 { 1.0 } else { -1.0 };
@@ -182,6 +197,13 @@ impl Companion {
         self.wake();
         self.mood = Mood::Idle;
         self.start_trick(Trick::Clones);
+    }
+
+    /// A smoke break on demand.
+    pub fn smoke(&mut self) {
+        self.wake();
+        self.mood = Mood::Idle;
+        self.start_trick(Trick::Smoke);
     }
 
     /// Double click: glitch.
@@ -247,8 +269,12 @@ impl Companion {
             _ => {}
         }
 
-        let eyes =
-            if sleeping || tick < self.blink_until { Eyes::Closed } else { Eyes::Open { look_up: self.mood == Mood::Hover } };
+        let smoking = self.trick == Some(Trick::Smoke);
+        let eyes = if sleeping || tick < self.blink_until || (smoking && t < DRAG_END) {
+            Eyes::Closed
+        } else {
+            Eyes::Open { look_up: self.mood == Mood::Hover }
+        };
         let screen = match self.mood {
             Mood::Idle if self.trick == Some(Trick::Wave) => Screen::Listening { tick },
             Mood::Idle if self.trick == Some(Trick::Look) => Screen::Thinking { active: (t / 4) % 3 },
@@ -292,6 +318,10 @@ impl Companion {
                 let y0 = oy + 8.0 * p - ph as f32 * 2.5;
                 draw_pattern(c, &note, x0, y0, p * 0.6, color);
             }
+        }
+
+        if smoking {
+            draw_smoke(c, t, ox, oy, p);
         }
 
         // zzz above the head
@@ -355,6 +385,57 @@ impl Companion {
             let s = t - start;
             if (0..9).contains(&s) {
                 puff(c, cx, cy, 38.0 + s as f32 * 3.0, 1.0 - s as f32 / 9.0, start as u32);
+            }
+        }
+    }
+}
+
+/// A cigarette at the right side of the mouth, a wisp from the ember, and rings blown after the drag.
+fn draw_smoke(c: &mut Canvas, t: i32, ox: f32, oy: f32, p: f32) {
+    let y = oy + (sprite::TOP as f32 + 5.0) * p;
+    let h = p;
+    let x0 = ox + 14.0 * p;
+    c.fill_rect(x0, y, p * 1.5, h, FILTER);
+    c.fill_rect(x0 + p * 1.5, y, p * 3.5, h, PAPER);
+    let inhaling = t < DRAG_END;
+    let ember = if inhaling && t % 2 == 0 { EMBER_HOT } else { EMBER };
+    c.fill_rect(x0 + p * 5.0, y, p, h, ember);
+
+    // a thin wisp curling up from the ember
+    let (ex, ey) = (x0 + p * 5.5, y - 2.0);
+    for k in 0..12 {
+        let ph = (t + k * 2) % 24;
+        let wiggle = ((ph as f32 * 0.5 + k as f32).sin() * 3.0).round();
+        let cell = 3.0;
+        let color = if k % 2 == 0 { SMOKE } else { SMOKE_SHADE };
+        c.fill_rect(ex + wiggle - 1.0, ey - ph as f32 * 1.6, cell, cell, color.alpha(0.8 * (1.0 - ph as f32 / 24.0)));
+    }
+
+    // smoke rings: born at the ember, they grow and drift up and away, fading
+    let mut start = RINGS_START;
+    while start <= t {
+        let age = t - start;
+        if age < RING_LIFE && start < SMOKE_LENGTH - 6 {
+            let f = age as f32 / RING_LIFE as f32;
+            let cx = ex + 2.0 + (f * 5.0).sin() * 3.0;
+            let cy = ey - 8.0 - f * 52.0;
+            ring(c, cx, cy, 4.0 + f * 13.0, 1.0 - f);
+        }
+        start += RING_EVERY;
+    }
+}
+
+/// A pixel ellipse outline, wider than tall, like a ring seen from the side.
+fn ring(c: &mut Canvas, cx: f32, cy: f32, r: f32, fade: f32) {
+    let cell = 2.0;
+    let n = (r / cell).ceil() as i32 + 1;
+    for j in -n..=n {
+        for i in -n..=n {
+            let (x, y) = (i as f32 * cell, j as f32 * cell);
+            let d = ((x / r).powi(2) + (y / (r * 0.55)).powi(2)).sqrt();
+            if (d - 1.0).abs() < 0.32 {
+                let color = if y > 0.0 { SMOKE_SHADE } else { SMOKE };
+                c.fill_rect(cx + x - cell / 2.0, cy + y - cell / 2.0, cell, cell, color.alpha(fade));
             }
         }
     }

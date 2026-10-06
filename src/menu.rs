@@ -12,6 +12,7 @@ pub enum Action {
     Sleep,
     Fiesta,
     Clones,
+    Smoke,
     ResetPosition,
     /// Toggle: start Pixel at login (checked when on).
     Autostart,
@@ -23,7 +24,7 @@ pub enum Entry {
     Separator,
 }
 
-pub const ENTRIES: [Entry; 12] = [
+pub const ENTRIES: [Entry; 13] = [
     Entry::Item(Action::Voice),
     Entry::Item(Action::OpenClaude),
     Entry::Item(Action::OpenCode),
@@ -32,6 +33,7 @@ pub const ENTRIES: [Entry; 12] = [
     Entry::Item(Action::Sleep),
     Entry::Item(Action::Fiesta),
     Entry::Item(Action::Clones),
+    Entry::Item(Action::Smoke),
     Entry::Item(Action::ResetPosition),
     Entry::Separator,
     Entry::Item(Action::Autostart),
@@ -48,6 +50,7 @@ pub fn title(a: Action, listening: bool) -> &'static str {
         Action::Sleep => "Put to sleep",
         Action::Fiesta => "Fiesta!",
         Action::Clones => "Shadow clones!",
+        Action::Smoke => "Smoke break",
         Action::ResetPosition => "Back to corner",
         Action::Autostart => "Start at login",
         Action::Quit => "Quit",

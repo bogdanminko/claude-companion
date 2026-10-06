@@ -531,6 +531,7 @@ impl App {
             Action::Sleep => self.companion.go_to_sleep(),
             Action::Fiesta => self.companion.fiesta(),
             Action::Clones => self.companion.clones(),
+            Action::Smoke => self.companion.smoke(),
             Action::ResetPosition => {
                 self.monitors_at = None;
                 self.refresh_monitors(el);
